@@ -1,11 +1,9 @@
-<!-- doctor_update_progress.html (最終優化：大格子顯示、按鈕可點) -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>即時看診進度</title>
+  <title>更新看診進度</title>
   <style>
-    /* 全域樣式 */
     body {
       font-family: sans-serif;
       padding: 30px;
@@ -14,13 +12,14 @@
       margin: 0;
       background: linear-gradient(to bottom right, #e0f7fa, #ede7f6);
     }
+
     h1 {
       color: #333;
       margin-bottom: 20px;
-      font-size: 2rem;
     }
+
     select, button {
-      font-size: 1rem;
+      font-size: 16px;
       padding: 10px 20px;
       margin: 10px;
       border: 1px solid #ccc;
@@ -28,58 +27,25 @@
       background-color: #ffffffdd;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
     button:hover {
       background-color: #f0f0f0;
       cursor: pointer;
     }
-    /* 大格子排版 */
-    .stats-grid {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin: 40px 0;
-    }
-    .stat-box {
-      background-color: #ffffffcc;
-      padding: 30px;
-      border-radius: 16px;
-      width: 220px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .stat-box h2 {
-      margin: 0 0 10px;
-      font-size: 1.1rem;
-      color: #555;
-    }
-    .stat-box p {
-      margin: 0;
-      font-size: 3rem;
-      font-weight: bold;
-      color: #333;
-    }
-    /* 等候列表 */
-    #waitingList {
-      list-style: none;
-      padding: 0;
-      margin: 20px auto;
-      max-width: 300px;
-      text-align: left;
-    }
-    #waitingList li {
-      background: white;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    /* 下一位按鈕 */
-    #nextBtn {
+
+    .number {
+      font-size: 2em;
       margin-top: 30px;
-      z-index: 1;
-      position: relative;
+      background-color: #ffffffcc;
+      padding: 20px;
+      border-radius: 12px;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    p {
+      font-size: 1.1em;
+      color: #555;
     }
   </style>
 </head>
@@ -93,28 +59,8 @@
       <option value="evening">晚診</option>
     </select>
   </p>
-
-  <!-- 大格子顯示 -->
-  <div class="stats-grid">
-    <div class="stat-box">
-      <h2>目前看診</h2>
-      <p id="current">-</p>
-    </div>
-    <div class="stat-box">
-      <h2>等待人數</h2>
-      <p id="waitingCount">-</p>
-    </div>
-    <div class="stat-box">
-      <h2>預估等待</h2>
-      <p><span id="eta">-</span> 分鐘</p>
-    </div>
-  </div>
-
-  <!-- 等候名單 -->
-  <ul id="waitingList"><li>載入中...</li></ul>
-
-  <!-- 下一位病人按鈕 -->
-  <button id="nextBtn" onclick="nextPatient()">下一位病人</button>
+  <button onclick="nextPatient()">下一位病人</button>
+  <div class="number">目前號碼：第 <span id="current">1</span> 號</div>
 
   <script>
     const doctorId = localStorage.getItem("doctorId") || "10001";
@@ -122,35 +68,26 @@
     document.getElementById("today").textContent = today;
 
     const sessionSelect = document.getElementById("session");
-    const currentSpan = document.getElementById("current");
-    const waitingCountSpan = document.getElementById("waitingCount");
-    const etaSpan = document.getElementById("eta");
-    const waitingListEl = document.getElementById("waitingList");
+    const numberSpan = document.getElementById("current");
 
-    // 拉取隊列並更新UI
-    async function refreshQueue() {
-      try {
-        const res = await fetch(`/api/doctors/${doctorId}/queue?session=${sessionSelect.value}&date=${today}`);
-        const { current, waiting } = await res.json();
-        currentSpan.textContent = current;
-        waitingCountSpan.textContent = waiting.length;
-        etaSpan.textContent = waiting.length * 5;
-        waitingListEl.innerHTML = waiting.map(p => `<li>第${p.no}號 ${p.name}</li>`).join('');
-      } catch (err) {
-        console.error('更新隊列失敗', err);
-        waitingListEl.innerHTML = '<li>無法取得隊列</li>';
-      }
+    function getKey() {
+      return `progress_${doctorId}_${today}_${sessionSelect.value}`;
     }
 
-    // localStorage 進度備援
-    function getKey() { return `progress_${doctorId}_${today}_${sessionSelect.value}`; }
-    function loadProgress() { currentSpan.textContent = parseInt(localStorage.getItem(getKey())||"1", 10); }
-    function nextPatient() { let c=parseInt(localStorage.getItem(getKey())||"1",10); if(c<99)c++; localStorage.setItem(getKey(),c); loadProgress(); }
+    function loadProgress() {
+      const current = parseInt(localStorage.getItem(getKey()) || "1", 10);
+      numberSpan.textContent = current;
+    }
 
-    // 事件與初始
-    sessionSelect.addEventListener('change', ()=>{ loadProgress(); refreshQueue(); });
-    loadProgress(); refreshQueue();
-    setInterval(refreshQueue, 10000);
+    function nextPatient() {
+      let current = parseInt(localStorage.getItem(getKey()) || "1", 10);
+      if (current < 45) current++;
+      localStorage.setItem(getKey(), current);
+      numberSpan.textContent = current;
+    }
+
+    sessionSelect.addEventListener("change", loadProgress);
+    loadProgress();
   </script>
 </body>
 </html>

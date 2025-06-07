@@ -89,11 +89,7 @@
 
   <script>
     // 檢查登入狀態
-    const account = localStorage.getItem("account");
-    if (!account) {
-      alert("請先以病人身份登入才能查看個人資料！");
-      window.location.href = "patient_login.html";  // 導向登入頁
-    }
+
 
     // 假資料範例，可改為 fetch 後端資料
     const patientData = {

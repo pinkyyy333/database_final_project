@@ -293,12 +293,6 @@
       container.appendChild(section);
     }
 
-    // 登入驗證
-    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "patient") {
-      alert("請先以病人身份登入才能使用預約服務！");
-      window.location.href = "patient_login.html";
-    }
-
     document.addEventListener("DOMContentLoaded", () => {
       const patientAccount = localStorage.getItem("account");
       if (patientAccount) {

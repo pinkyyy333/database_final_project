@@ -134,8 +134,57 @@
         return;
       }
 
+      if (!phoneRegex.test(Phone)) {
+        alert("請輸入正確的電話（10位數字）！");
+        return;
+      }
+
       if (!phoneRegex.test(emergencyPhone)) {
         alert("請輸入正確的緊急聯絡人電話（10位數字）！");
+        return;
+      }
+      // 驗證藥物過敏「其他」
+      const drugOtherCheckbox = document.querySelector('input[name="drug_allergy[]"][value="其他"]');
+      const drugOtherText = document.querySelector('input[name="drug_allergy_other"]').value.trim();
+      if (drugOtherCheckbox.checked && drugOtherText === "") {
+        alert("請填寫其他藥物過敏項目！");
+        return;
+      }
+
+      // 驗證食物過敏「其他」
+      const foodOtherCheckbox = document.querySelector('input[name="food_allergy[]"][value="其他"]');
+      const foodOtherText = document.querySelector('input[name="food_allergy_other"]').value.trim();
+      if (foodOtherCheckbox.checked && foodOtherText === "") {
+        alert("請填寫其他食物過敏項目！");
+        return;
+      }
+
+      // 驗證病史「其他」
+      const historyOtherCheckbox = document.querySelector('input[name="medical_history[]"][value="其他"]');
+      const historyOtherText = document.querySelector('input[name="medical_history_other"]').value.trim();
+      if (historyOtherCheckbox.checked && historyOtherText === "") {
+        alert("請填寫其他過去病史項目！");
+        return;
+      }
+
+      // 至少勾選一個過敏藥物
+      const drugChecked = document.querySelectorAll('input[name="drug_allergy[]"]:checked').length > 0;
+      if (!drugChecked) {
+        alert("請選擇至少一項藥物過敏！");
+        return;
+      }
+
+      // 至少勾選一個過敏食物
+      const foodChecked = document.querySelectorAll('input[name="food_allergy[]"]:checked').length > 0;
+      if (!foodChecked) {
+        alert("請選擇至少一項食物過敏！");
+        return;
+      }
+
+      // 至少勾選一個病史
+      const historyChecked = document.querySelectorAll('input[name="medical_history[]"]:checked').length > 0;
+      if (!historyChecked) {
+        alert("請選擇至少一項過去病史！");
         return;
       }
 
@@ -200,6 +249,7 @@
 
       <label>過敏藥物:</label>
       <div class="checkbox-group">
+        <label><input type="checkbox" name="drug_allergy[]" value="無"> 無</label>
         <label><input type="checkbox" name="drug_allergy[]" value="盤尼西林"> 盤尼西林</label>
         <label><input type="checkbox" name="drug_allergy[]" value="磺胺藥"> 磺胺藥</label>
         <label><input type="checkbox" name="drug_allergy[]" value="其他"> 其他：
@@ -209,6 +259,7 @@
 
       <label>過敏食物:</label>
       <div class="checkbox-group">
+        <label><input type="checkbox" name="food_allergy[]" value="無"> 無</label>
         <label><input type="checkbox" name="food_allergy[]" value="花生"> 花生</label>
         <label><input type="checkbox" name="food_allergy[]" value="海鮮"> 海鮮</label>
         <label><input type="checkbox" name="food_allergy[]" value="其他"> 其他：
@@ -218,6 +269,7 @@
 
       <label>過去病史:</label>
       <div class="checkbox-group">
+        <label><input type="checkbox" name="medical_history[]" value="無"> 無</label>
         <label><input type="checkbox" name="medical_history[]" value="高血壓"> 高血壓</label>
         <label><input type="checkbox" name="medical_history[]" value="糖尿病"> 糖尿病</label>
         <label><input type="checkbox" name="medical_history[]" value="其他"> 其他：

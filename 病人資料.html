@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>病人紀錄查詢</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; margin: 40px; }
+    h2 { color: #1f3a93; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background-color: #f0f8ff; }
+  </style>
+</head>
+<body>
+  <h1>病人資訊</h1>
+  <p><strong>帳號：</strong><?= htmlspecialchars($patient['patient_id']) ?></p>
+  <p><strong>姓名：</strong><?= htmlspecialchars($patient['name']) ?></p>
+
+  <h2>預約紀錄</h2>
+  <table>
+    <tr><th>日期</th><th>時段</th><th>科別</th><th>醫生</th></tr>
+    <?php while($row = $appointments->fetch_assoc()): ?>
+      <tr>
+        <td><?= $row['date'] ?></td>
+        <td><?= $row['timeslot'] ?></td>
+        <td><?= $row['dept_name'] ?></td>
+        <td><?= $row['doctor_name'] ?></td>
+      </tr>
+    <?php endwhile; ?>
+  </table>
+
+  <h2>病史紀錄</h2>
+  <table>
+    <tr><th>日期</th><th>科別</th><th>醫生</th><th>診斷結果</th><th>處方藥物</th></tr>
+    <?php while($row = $records->fetch_assoc()): ?>
+      <tr>
+        <td><?= $row['date'] ?></td>
+        <td><?= $row['dept_name'] ?></td>
+        <td><?= $row['doctor_name'] ?></td>
+        <td><?= htmlspecialchars($row['diagnosis']) ?></td>
+        <td><?= htmlspecialchars($row['prescription']) ?></td>
+      </tr>
+    <?php endwhile; ?>
+  </table>
+</body>
+</html>

@@ -1,3 +1,4 @@
+<!-- appointment.html (整合同學調整 + 預約提醒功能) -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 
@@ -34,7 +35,13 @@
       color: #1f3a93;
       border-left: 5px solid #1f3a93;
       padding-left: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+    }
+
+    .department-description {
+      margin: -10px 0 20px 5px;
+      color: #666;
+      font-size: 15px;
     }
 
     .doctor-list {
@@ -47,31 +54,34 @@
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      width: 260px;
+      width: 230px;
       text-align: left;
       overflow: hidden;
+      min-height: auto;
     }
 
     .card img {
       width: 100%;
-      max-height: 180px;
+      max-height: 150px;
       object-fit: contain;
       background-color: #f0f0f0;
     }
 
     .card-content {
-      padding: 15px;
+      padding: 10px;
     }
 
     .card h3 {
-      margin: 0 0 5px;
+      margin: 0 0 3px;
+      font-size: 15px;
       color: #333;
     }
 
     .card p {
-      margin: 5px 0;
+      margin: 3px 0;
+      font-size: 12px;
       color: #555;
-      font-size: 14px;
+      line-height: 1.4;
     }
 
     .form-container {
@@ -143,7 +153,7 @@
 
   <div class="form-container">
     <h2>病人預約掛號系統</h2>
-    <form method="POST" action="register.php">
+    <form id="appointmentForm" method="POST" action="register.php">
       <label for="dept_id">選擇科別：</label>
       <select name="dept_id" id="dept_id" required>
         <option value="">請選擇</option>
@@ -167,7 +177,7 @@
       </select>
 
       <label for="patient_id">病人帳號：</label>
-      <input type="text" name="patient_id" id="patient_id" placeholder="請登入後自動填入" required>
+      <input type="text" name="patient_id" id="patient_id" placeholder="請登入後自動填入" readonly required>
 
       <!-- 【新增提醒設定欄位】 -->
       <label for="reminder_offset">提醒時間：</label>
@@ -182,183 +192,150 @@
   </div>
 
   <script>
+    // 資料結構（含 description 與 doctors）
     const departments = {
       "院長": [{
         name: '陳建民',
         title: "院長、外科主治醫生",
         education: "國立台灣大學醫學系",
         experience: '台大醫院、榮總住院醫師',
-        specialty: "一般外科、痔瘡、疝氣",
+        specialty: "大腸直腸癌手術、甲狀腺與乳房腫瘤切除、腹腔鏡微創手術",
         image: "醫生1.jpg"
       }],
-      "外科": [{
-        name: '林芳瑜',
-        title: "主治醫師",
-        education: '國立陽明交通大學醫學系',
-        experience: '亞東醫院主治醫師',
-        specialty: '全身表面外傷處理',
-        image: "醫生2.jpg"
-      }],
-      "內科": [{
+      "外科": {
+        description:"外科主要以手術方式治療消化道、甲狀腺、乳房等器官的疾病，強調微創與術後照護。本院外科團隊具備微創手術經驗，強調術後疼痛控制與快速康復，並配有術前評估與術後追蹤管理，提供病患安全、精準與個別化的外科治療服務。",
+        doctors: [
+        {
+          name: '林芳瑜',
+          title: "主治醫師",
+          education: '國立陽明交通大學醫學系',
+          experience: '亞東醫院主治醫師',
+          specialty: '肛門痔瘡手術、體表腫瘤/囊腫切除',
+          image: "醫生2.jpg"
+      }]
+    },
+      "內科": {
+        description: "內科專注於以藥物與非手術方式治療慢性病、感染與器官系統疾病，是病患的重要初診科別。我們的內科團隊致力於以循證醫學（EBM）為基礎，配合臨床指引與多專科會診模式，為病患提供連續性、個別化與預防導向的全人照護。",
+        doctors: [
+        {
         name: '張育誠',
         title: "主治醫師",
         education: '高雄醫學大學醫學系',
         experience: '馬偕醫院',
-        specialty: "胃腸、肝膽疾病",
+        specialty: "糖尿病、慢性腎臟病",
         image: "醫生3.jpg"
       }, {
         name: '周怡君',
         title: "主治醫師",
         education: '中山醫學大學醫學系',
         experience: '彰基、澄清醫院',
-        specialty: '氣喘、高血壓、心律不整治療',
+        specialty: '腸胃疾病、呼吸道疾病',
         image: "醫生4.jpg"
-      }],
-      "耳鼻喉科": [{
+      }]
+    },
+      "耳鼻喉科": {
+        description: "耳鼻喉科治療耳、鼻、喉部疾病，涵蓋鼻炎、聲音沙啞、聽力障礙與打鼾等多項專業項目。耳鼻喉科設有專業檢查儀器（內視鏡、聲門動態分析、聽力檢查室等），並與睡眠中心與復健科合作，提供打鼾治療、語音治療等多元整合服務。",
+        doctors: [
+        {
         name: '李冠廷',
         title: "主治醫師",
         education: '中國醫藥大學醫學系',
         experience: '中醫附醫',
-        specialty: '感冒、眩暈、鼻塞診治',
+        specialty: '過敏性鼻炎、耳鳴、眩暈與中耳炎診治',
         image: "醫生5.jpg"
       }, {
         name: '吳宛蓉',
         title: "主治醫師",
         education: '馬偕醫學院醫學系',
         experience: '馬偕耳鼻喉科診所',
-        specialty: '感冒、眩暈、鼻塞診治',
+        specialty: '鼻過敏與長期鼻塞治療、聽力檢查與耳道異物處理',
         image: "醫生6.jpg"
       }]
+    }
     };
 
+    // 渲染醫師卡片
     const container = document.getElementById("department-container");
-    document.querySelector("form").addEventListener("submit", function (e) {
-      const deptText = document.getElementById("dept_id").selectedOptions[0].text;
-      const date = document.getElementById("date").value;
-      const timeslot = document.getElementById("timeslot").value;
-      const doctorText = document.getElementById("doctor_id").selectedOptions[0]?.text || "未知醫生";
-
-      const confirmMsg = `請確認是否預約：\n\n【科別】${deptText}\n【日期】${date}\n【時段】${timeslot}\n【醫師】${doctorText}`;
-
-      if (!confirm(confirmMsg)) {
-        e.preventDefault(); // 取消送出
-      }
-    });
-    
     for (const dept in departments) {
       const section = document.createElement("section");
       section.className = "department";
-
-      const header = document.createElement("h2");
-      header.textContent = dept;
+      const header = document.createElement("h2"); header.textContent = dept;
       section.appendChild(header);
-
-      const list = document.createElement("div");
-      list.className = "doctor-list";
-
-      departments[dept].forEach(doc => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${doc.image}" alt="${doc.name}">
-          <div class="card-content">
-            <h3>${doc.name}</h3>
-            <p><strong>${doc.title}</strong></p>
-            <p><strong>學歷：</strong>${doc.education}</p>
-            <p><strong>經歷：</strong>${doc.experience}</p>
-            <p><strong>專長：</strong>${doc.specialty}</p>
-          </div>
-        `;
+      if (departments[dept].description) {
+        const desc = document.createElement("p"); desc.className = "department-description";
+        desc.textContent = departments[dept].description;
+        section.appendChild(desc);
+      }
+      const list = document.createElement("div"); list.className = "doctor-list";
+      const docs = Array.isArray(departments[dept]) ? departments[dept] : departments[dept].doctors;
+      docs.forEach(doc => {
+        const card = document.createElement("div"); card.className = "card";
+        card.innerHTML = `<img src="${doc.image}" alt="${doc.name}"><div class="card-content"><h3>${doc.name}</h3><p><strong>${doc.title}</strong></p><p><strong>學歷：</strong>${doc.education}</p><p><strong>經歷：</strong>${doc.experience}</p><p><strong>專長：</strong>${doc.specialty}</p></div>`;
         list.appendChild(card);
       });
-
       section.appendChild(list);
       container.appendChild(section);
     }
 
+    // 登入驗證 & 自動帶入帳號
+    document.addEventListener("DOMContentLoaded", () => {
+      const account = localStorage.getItem("account");
+      const phone = localStorage.getItem("phone") || "";
+      if (account) {
+        const input = document.getElementById("patient_id");
+        input.value = account; input.readOnly = true;
+      }
+      ["dept_id","date","timeslot"].forEach(id => document.getElementById(id).addEventListener("change", loadDoctors));
+      // 設定提醒後可用電話
+      window.patientPhone = phone;
+    });
+
+    // 預約提醒函式
     function scheduleReminder(appointmentDate, timeslot, offsetMinutes, phone) {
       const [start] = timeslot.split('-');
-      const [hour, minute] = start.split(':').map(Number);
-      const appt = new Date(appointmentDate);
-      appt.setHours(hour, minute, 0, 0);
+      const [h, m] = start.split(':').map(Number);
+      const appt = new Date(appointmentDate); appt.setHours(h, m, 0, 0);
       const remindAt = new Date(appt.getTime() - offsetMinutes * 60000);
       const delay = remindAt - Date.now();
       if (delay > 0) {
         setTimeout(() => {
           alert(`提醒：您於 ${appointmentDate} ${timeslot} 的預約即將到來，簡訊已發送至 ${phone}`);
-          // TODO: 呼叫後端發送真正的簡訊
         }, delay);
       }
     }
 
+    // 送出預約並排程提醒
     document.getElementById("appointmentForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      // 取值
+      // 先排程提醒
       const date = this.date.value;
       const timeslot = this.timeslot.value;
-      const offset = Number(this.reminder_offset.value);  // 【提醒偏移值】
-      const phone = localStorage.getItem("phone") || "";  // 病人電話
-
-      // TODO: 呼叫後端 POST /api/appointments 建立預約
-
-      // 【呼叫提醒排程】
-      scheduleReminder(date, timeslot, offset, phone);
-      alert("預約成功！提醒已設定。");
-      this.reset();
+      const offset = Number(document.getElementById("reminder_offset").value);
+      scheduleReminder(date, timeslot, offset, window.patientPhone);
+      // 送表單予後端
     });
 
-    // 登入驗證
-    /*
-    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "patient") {
-      alert("請先以病人身份登入才能使用預約服務！");
-      window.location.href = "patient_login.html";
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const patientAccount = localStorage.getItem("account");
-      if (patientAccount) {
-        const patientInput = document.getElementById("patient_id");
-        patientInput.value = patientAccount;
-        patientInput.readOnly = true;
-      }
-
-      document.getElementById("dept_id").addEventListener("change", loadDoctors);
-      document.getElementById("date").addEventListener("change", loadDoctors);
-      document.getElementById("timeslot").addEventListener("change", loadDoctors);
-    });
-*/
+    // 載入醫師列表
     async function loadDoctors() {
       const deptId = document.getElementById("dept_id").value;
       const date = document.getElementById("date").value;
       const timeslot = document.getElementById("timeslot").value;
-
       if (!deptId || !date || !timeslot) return;
-
       try {
-        const response = await fetch(`get_doctors.php?dept_id=${deptId}&date=${date}&timeslot=${timeslot}`);
-        const data = await response.json();
-
-        const doctorSelect = document.getElementById("doctor_id");
-        doctorSelect.innerHTML = "";
-
-        if (data.length === 0) {
-          const option = document.createElement("option");
-          option.text = "此時段無醫生可預約";
-          option.disabled = true;
-          option.selected = true;
-          doctorSelect.add(option);
+        const res = await fetch(`get_doctors.php?dept_id=${deptId}&date=${date}&timeslot=${timeslot}`);
+        const data = await res.json();
+        const sel = document.getElementById("doctor_id"); sel.innerHTML = '';
+        if (!data.length) {
+          const opt = document.createElement('option'); opt.text='此時段無醫生可預約'; opt.disabled=true; opt.selected=true;
+          sel.add(opt);
         } else {
-          data.forEach(doc => {
-            const option = document.createElement("option");
-            option.value = doc.doctor_id;
-            option.text = `${doc.name}（剩餘名額：${doc.remaining}）`;
-            option.disabled = doc.remaining === 0;
-            doctorSelect.add(option);
+          data.forEach(d => {
+            const opt = document.createElement('option'); opt.value=d.doctor_id;
+            opt.text=`${d.name}（剩餘名額：${d.remaining}）`;
+            opt.disabled=d.remaining===0; sel.add(opt);
           });
         }
       } catch (err) {
-        alert("無法載入醫生資料，請稍後再試！");
-        console.error(err);
+        alert('無法載入醫生資料，請稍後再試！'); console.error(err);
       }
     }
   </script>

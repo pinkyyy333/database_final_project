@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>病歷與回饋查詢</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      padding: 30px;
+      color: #111;
+    }
+
+    h2 {
+      color: #1d4ed8;
+      margin-bottom: 20px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .record, .feedback {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .record h4, .feedback h4 {
+      margin: 0 0 5px;
+      color: #0f172a;
+    }
+
+    .feedback p {
+      margin: 5px 0;
+    }
+
+    .stat {
+      background: #e0f2fe;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>病歷與回饋</h2>
+
+  <div class="section" id="medicalRecords">
+    <h3>🩺 過去病歷紀錄</h3>
+    <!-- 病歷會插入在這 -->
+  </div>
+
+  <div class="section" id="feedbackSection">
+    <h3>💬 病人回饋</h3>
+    <div class="stat" id="averageRating">平均評分：-</div>
+    <!-- 回饋會插入在這 -->
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get("patientId");
+
+    // 假資料：病人姓名對照
+    const patientNames = {
+      "P001": "王小明",
+      "P002": "陳美華",
+      "P003": "林志玲"
+    };
+
+    // 假資料：病歷紀錄
+    const medicalHistory = {
+      "P001": [
+        { date: "2025-04-10", diagnosis: "感冒", treatment: "開立感冒藥" },
+        { date: "2025-05-02", diagnosis: "咳嗽", treatment: "開立止咳藥" }
+      ],
+      "P002": [
+        { date: "2025-03-12", diagnosis: "過敏性鼻炎", treatment: "抗組織胺處方" }
+      ]
+    };
+
+    // 假資料：回饋紀錄
+    const feedbackData = {
+      "P001": [
+        { rating: 5, comment: "醫師很親切，解釋清楚" },
+        { rating: 4, comment: "看診速度快，但稍微趕" }
+      ],
+      "P002": [
+        { rating: 3, comment: "還可以，但等很久" }
+      ]
+    };
+
+    // 更新頁面標題
+    const name = patientNames[patientId] || "未知病人";
+    document.querySelector("h2").textContent = `${name} 的病歷與回饋`;
+
+    // 載入病歷
+    const recordList = medicalHistory[patientId] || [];
+    const recordsDiv = document.getElementById("medicalRecords");
+
+    if (recordList.length === 0) {
+      recordsDiv.innerHTML += "<p>尚無病歷資料。</p>";
+    } else {
+      recordList.forEach(r => {
+        recordsDiv.innerHTML += `
+          <div class="record">
+            <h4>📅 日期：${r.date}</h4>
+            <p>診斷：${r.diagnosis}</p>
+            <p>治療：${r.treatment}</p>
+          </div>
+        `;
+      });
+    }
+
+    // 載入回饋
+    const feedbackList = feedbackData[patientId] || [];
+    const feedbackDiv = document.getElementById("feedbackSection");
+    const avgRatingDiv = document.getElementById("averageRating");
+
+    if (feedbackList.length === 0) {
+      feedbackDiv.innerHTML += "<p>尚無回饋資料。</p>";
+    } else {
+      let total = 0;
+      feedbackList.forEach(f => {
+        total += f.rating;
+        feedbackDiv.innerHTML += `
+          <div class="feedback">
+            <h4>⭐ 評分：${f.rating}</h4>
+            <p>${f.comment}</p>
+          </div>
+        `;
+      });
+      const avg = (total / feedbackList.length).toFixed(1);
+      avgRatingDiv.textContent = `平均評分：${avg} / 5`;
+    }
+  </script>
+</body>
+</html>

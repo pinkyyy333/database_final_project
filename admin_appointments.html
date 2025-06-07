@@ -61,24 +61,31 @@
     }
 
     function renderTable(list) {
-      if (!list.length) {
-        tableBody.innerHTML = '<tr><td colspan="7">該日期無預約</td></tr>';
-        return;
-      }
-      tableBody.innerHTML = list.map(a => `
-        <tr>
-          <td>${a.PatientName}</td>
-          <td>${a.DoctorName}</td>
-          <td>${a.DeptName}</td>
-          <td>${a.Date}</td>
-          <td>${a.Time}</td>
-          <td>${a.Status}</td>
-          <td>
-            <button class="action" onclick="updateStatus(${a.ID}, 'cancelled')">取消</button>
-            <button class="action" onclick="updateStatus(${a.ID}, 'no_show')">標記未出現</button>
-          </td>
-        </tr>`).join('');
+    if (!list.length) {
+      tableBody.innerHTML = '<tr><td colspan="7">該日期無預約</td></tr>';
+      return;
     }
+    tableBody.innerHTML = list.map(a => {
+      // 將 ISO 時間字串分拆為日期 + 時間
+      const dt = new Date(a.appointment_time);
+      const dateStr = dt.toLocaleDateString(); // 例如 "2025/6/11"
+      const timeStr = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // 例如 "10:30"
+
+      return `
+        <tr>
+          <td>${a.patient_id}</td>
+          <td>${a.doctor_id}</td>
+          <td>${a.department_id}</td>
+          <td>${dateStr}</td>
+          <td>${timeStr}</td>
+          <td>${a.status}</td>
+          <td>
+            <button class="action" onclick="updateStatus(${a.appointment_id}, 'cancelled')">取消</button>
+            <button class="action" onclick="updateStatus(${a.appointment_id}, 'no_show')">標記未出現</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
 
     async function updateStatus(id, status) {
       try {

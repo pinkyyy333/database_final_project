@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理員 - 全院預約清單</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    .controls { margin: 20px 0; text-align: center; }
+    .controls input, .controls button { padding: 8px 12px; font-size: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    button.action { padding: 4px 8px; margin: 0 2px; }
+  </style>
+</head>
+<body>
+  <h1>全院預約清單</h1>
+  <div class="controls">
+    <label for="dateFilter">選擇日期：</label>
+    <input type="date" id="dateFilter" />
+    <button id="loadApps">載入預約</button>
+  </div>
+  <div id="message"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>病人姓名</th>
+        <th>醫師姓名</th>
+        <th>科別</th>
+        <th>日期</th>
+        <th>時段</th>
+        <th>狀態</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="appsTable">
+      <tr><td colspan="7">請選擇日期並點擊「載入預約」</td></tr>
+    </tbody>
+  </table>
+  <script>
+    const dateFilter = document.getElementById('dateFilter');
+    const loadBtn = document.getElementById('loadApps');
+    const tableBody = document.getElementById('appsTable');
+    const message = document.getElementById('message');
+
+    async function loadApps(date) {
+      if (!date) {
+        message.textContent = '請先選擇日期'; return;
+      }
+      try {
+        const res = await fetch(`/api/v1/manager/appointments?date=${date}`);
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        renderTable(data.appointments);
+      } catch (err) {
+        message.textContent = '載入失敗，請稍後再試';
+        console.error(err);
+      }
+    }
+
+    function renderTable(list) {
+      if (!list.length) {
+        tableBody.innerHTML = '<tr><td colspan="7">該日期無預約</td></tr>';
+        return;
+      }
+      tableBody.innerHTML = list.map(a => `
+        <tr>
+          <td>${a.PatientName}</td>
+          <td>${a.DoctorName}</td>
+          <td>${a.DeptName}</td>
+          <td>${a.Date}</td>
+          <td>${a.Time}</td>
+          <td>${a.Status}</td>
+          <td>
+            <button class="action" onclick="updateStatus(${a.ID}, 'cancelled')">取消</button>
+            <button class="action" onclick="updateStatus(${a.ID}, 'no_show')">標記未出現</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function updateStatus(id, status) {
+      try {
+        const res = await fetch(`/api/v1/manager/appointments/${id}`, {
+          method: 'PATCH',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ status })
+        });
+        if (!res.ok) throw new Error();
+        loadApps(dateFilter.value);
+      } catch {
+        message.textContent = '操作失敗';
+      }
+    }
+
+    loadBtn.addEventListener('click', () => loadApps(dateFilter.value));
+  </script>
+</body>
+</html>

@@ -23,7 +23,7 @@ CREATE TABLE Doctors (
   Doctor_Experience TEXT,
   Doctor_Phone VARCHAR(15),
   Password VARCHAR(20) NOT NULL,
-  Doctor_Expertise TEXT
+  Doctor_Expertise TEXT,
   FOREIGN KEY (Dept_ID) REFERENCES Departments(Dept_ID)
 );
 

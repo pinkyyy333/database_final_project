@@ -12,6 +12,7 @@ func main() {
 	r := gin.Default()
 	db.InitDB()
 
+
 	// 啟動背景任務
 	go services.StartReminderCron()
 	go services.StartNoShowCron()
@@ -23,5 +24,7 @@ func main() {
 	routes.RegisterManagerRoutes(r)
 	routes.RegisterBonusRoutes(r)
 
-	r.Run()
+	r.Static("/static", "../front")
+	//r.Run()
+	r.Run(":8080")
 }

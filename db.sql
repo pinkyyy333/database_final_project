@@ -1,3 +1,14 @@
+-- db.sql
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS ManagerReports;
+DROP TABLE IF EXISTS Managers;
+DROP TABLE IF EXISTS Feedbacks;
+DROP TABLE IF EXISTS Appointments;
+DROP TABLE IF EXISTS Patients;
+DROP TABLE IF EXISTS Doctors;
+DROP TABLE IF EXISTS Departments;
+
 -- 部門表
 DROP TABLE IF EXISTS Departments;
 CREATE TABLE Departments (
@@ -11,14 +22,13 @@ INSERT INTO Departments (Dept_ID, Dept_Name, Dept_Description) VALUES
 (2, '內科', '氣喘、高血壓、心律不整治療'),
 (3, '耳鼻喉科', '感冒、眩暈、鼻塞診治');
 
--- 醫師表
-DROP TABLE IF EXISTS Doctors;
+-- Doctors 定義要與 INSERT 欄位數一致，別漏逗號
 CREATE TABLE Doctors (
   Doctor_ID CHAR(5) PRIMARY KEY,
   Dept_ID INT,
   Doctor_Name VARCHAR(10) NOT NULL,
   Doctor_Hire_Date DATE NOT NULL,
-  Doctor_Gender ENUM('男', '女') NOT NULL,
+  Doctor_Gender ENUM('男','女') NOT NULL,
   Doctor_Education VARCHAR(100),
   Doctor_Experience TEXT,
   Doctor_Phone VARCHAR(15),
@@ -27,13 +37,25 @@ CREATE TABLE Doctors (
   FOREIGN KEY (Dept_ID) REFERENCES Departments(Dept_ID)
 );
 
-INSERT INTO Doctors VALUES
-('10001', 1, '陳建民', '2018-03-15', '男', '國立台灣大學醫學系', '台大醫院、榮總住院醫師', '0912345678'),
-('10002', 1, '林芳瑜', '2020-07-22', '女', '國立陽明交通大學醫學系', '亞東醫院主治醫師', '0922333444'),
-('20001', 2, '張育誠', '2015-11-01', '男', '高雄醫學大學醫學系', '馬偕醫院', '0933444555'),
-('20002', 2, '周怡君', '2019-02-28', '女', '中山醫學大學醫學系', '彰基、澄清醫院', '0911222333'),
-('30001', 3, '李冠廷', '2017-05-18', '男', '中國醫藥大學醫學系', '中醫附醫', '0988777666'),
-('30002', 3, '吳宛蓉', '2021-09-05', '女', '馬偕醫學院醫學系', '馬偕耳鼻喉科診所', '0977555333');
+-- 你的假資料 INSERT
+
+INSERT INTO Doctors (
+  Doctor_ID, Dept_ID, Doctor_Name, Doctor_Hire_Date,
+  Doctor_Gender, Doctor_Education, Doctor_Experience, Doctor_Phone,
+  Password, Doctor_Expertise
+) VALUES
+('10001', 1, '陳建民', '2018-03-15', '男', '國立台灣大學醫學系', '台大醫院、榮總住院醫師', '0912345678',
+  'pwd10001', '大腸直腸癌手術、甲狀腺與乳房腫瘤切除、腹腔鏡微創手術'),
+('10002', 1, '林芳瑜', '2020-07-22', '女', '國立陽明交通大學醫學系', '亞東醫院主治醫師', '0922333444',
+  'pwd10002', '肛門痔瘡手術、體表腫瘤/囊腫切除'),
+('20001', 2, '張育誠', '2015-11-01', '男', '高雄醫學大學醫學系', '馬偕醫院', '0933444555',
+  'pwd20001', '糖尿病、慢性腎臟病'),
+('20002', 2, '周怡君', '2019-02-28', '女', '中山醫學大學醫學系', '彰基、澄清醫院', '0911222333',
+  'pwd20002', '腸胃疾病、呼吸道疾病'),
+('30001', 3, '李冠廷', '2017-05-18', '男', '中國醫藥大學醫學系', '中醫附醫', '0988777666',
+  'pwd30001', '過敏性鼻炎、耳鳴、眩暈與中耳炎診治'),
+('30002', 3, '吳宛蓉', '2021-09-05', '女', '馬偕醫學院醫學系', '馬偕耳鼻喉科診所', '0977555333',
+  'pwd30002', '鼻過敏與長期鼻塞治療、聽力檢查與耳道異物處理');
 
 -- 病人表
 DROP TABLE IF EXISTS Patients;
@@ -126,3 +148,5 @@ CREATE TABLE ManagerReports (
 INSERT INTO ManagerReports (Manager_ID, Patient_Noshow_Rate, Doctor_Utilization_Rate, Daily_Report, Total_Appointments) VALUES
 ('M1', 0.1, 0.85, '2025-06-06 report content', 18),
 ('M2', 0.05, 0.92, '2025-06-07 report content', 20);
+
+SET FOREIGN_KEY_CHECKS = 1;

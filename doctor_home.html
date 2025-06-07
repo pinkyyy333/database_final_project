@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>醫師首頁</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-image:  url('doctor.jpg'); /* 請確保路徑正確 */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .bg-overlay {
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(2px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="bg-overlay p-6 rounded-2xl shadow-md w-full max-w-md space-y-4 text-center">
+    <h1 class="text-2xl font-bold text-gray-800">歡迎，醫師</h1>
+
+    <a href="doctor_schedule.html" class="block bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">設定排班</a>
+    <a href="view_schedule.html" class="block bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600 transition">查看班表</a>
+    <a href="doctor_patients.html" class="block bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition">病患清單</a>
+    <a href="doctor_update_progress.html" class="block bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transition">即時看診進度更新</a>
+    <a href="select_patient.html" class="block bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-600 transition">病患病歷及回饋查詢</a>
+  </div>
+</body>
+</html>
+
+
+

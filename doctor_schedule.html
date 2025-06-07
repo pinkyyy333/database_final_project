@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>醫生排班設定</title>
+  <style>
+    body {
+      background-image: url('doctor.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .bg-overlay {
+      background-color: rgba(234, 246, 255, 0.95);
+      margin: 40px auto;
+      padding: 30px;
+      max-width: 900px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    h1, label, select, button {
+      color: #003366;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    td, th {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    .date-cell {
+      height: 100px;
+      background-color: #f0f8ff;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9em;
+    }
+
+    select {
+      margin: 10px;
+    }
+
+    button {
+      background-color: #3399ff;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background-color: #2277cc;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-overlay">
+    <h1>醫生排班設定</h1>
+
+    <label>選擇年份:
+      <select id="yearSelect"></select>
+    </label>
+    <label>選擇月份:
+      <select id="monthSelect"></select>
+    </label>
+
+    <div id="calendarContainer"></div>
+    <button onclick="submitSchedule()">提交排班</button>
+  </div>
+
+  <script>
+    const calendarContainer = document.getElementById("calendarContainer");
+    const yearSelect = document.getElementById("yearSelect");
+    const monthSelect = document.getElementById("monthSelect");
+
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y <= currentYear + 1; y++) {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      yearSelect.appendChild(opt);
+    }
+
+    for (let m = 0; m < 12; m++) {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m + 1;
+      monthSelect.appendChild(opt);
+    }
+
+    yearSelect.value = currentYear;
+    monthSelect.value = new Date().getMonth();
+
+    yearSelect.addEventListener("change", renderCalendar);
+    monthSelect.addEventListener("change", renderCalendar);
+
+    function renderCalendar() {
+      const year = parseInt(yearSelect.value);
+      const month = parseInt(monthSelect.value);
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      let html = "<table><tr>";
+      const days = ["日", "一", "二", "三", "四", "五", "六"];
+      for (let d of days) html += `<th>${d}</th>`;
+      html += "</tr><tr>";
+
+      for (let i = 0; i < firstDay; i++) html += "<td></td>";
+
+      for (let date = 1; date <= daysInMonth; date++) {
+        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+        html += `<td class="date-cell"><strong>${date}</strong>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="${fullDate}" value="morning" /> 早診</label>
+          <label><input type="checkbox" name="${fullDate}" value="afternoon" /> 午診</label>
+          <label><input type="checkbox" name="${fullDate}" value="evening" /> 晚診</label>
+        </div>
+        </td>`;
+        if ((date + firstDay) % 7 === 0) html += "</tr><tr>";
+      }
+
+      html += "</tr></table>";
+      calendarContainer.innerHTML = html;
+    }
+
+    renderCalendar();
+
+    function getWeekKey(dateStr) {
+      const date = new Date(dateStr);
+      const janFirst = new Date(date.getFullYear(), 0, 1);
+      const days = Math.floor((date - janFirst) / (1000 * 60 * 60 * 24));
+      const weekNum = Math.floor((days + janFirst.getDay()) / 7);
+      return `${date.getFullYear()}-W${weekNum}`;
+    }
+
+    function submitSchedule() {
+      const checkboxes = document.querySelectorAll("input[type='checkbox']:checked");
+      const schedule = {};
+      const weeklyDays = {};
+      const weeklyHours = {};
+
+      checkboxes.forEach(cb => {
+        const dateStr = cb.name;
+        const timeSlot = cb.value;
+        const weekKey = getWeekKey(dateStr);
+
+        if (!schedule[dateStr]) schedule[dateStr] = [];
+        schedule[dateStr].push(timeSlot);
+
+        if (!weeklyDays[weekKey]) weeklyDays[weekKey] = new Set();
+        weeklyDays[weekKey].add(dateStr);
+
+        if (!weeklyHours[weekKey]) weeklyHours[weekKey] = 0;
+        weeklyHours[weekKey] += 3;
+      });
+
+      for (const week in weeklyDays) {
+        if (weeklyDays[week].size > 6) {
+          alert(`第 ${week} 排班天數為 ${weeklyDays[week].size} 天，超過限制（最多 6 天）。請調整。`);
+          return;
+        }
+        if (weeklyHours[week] > 48) {
+          alert(`第 ${week} 工時為 ${weeklyHours[week]} 小時，超過限制（最多 48 小時）。請調整。`);
+          return;
+        }
+      }
+
+      localStorage.setItem("doctorSchedule", JSON.stringify(schedule));
+      alert("排班成功！");
+      window.location.href = "view_schedule.html";
+    }
+  </script>
+</body>
+</html>

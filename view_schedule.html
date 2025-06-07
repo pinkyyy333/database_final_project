@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>我的班表</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      color: #0055aa;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>醫師班表一覽</h1>
+  <div id="scheduleTableContainer"></div>
+
+  <script>
+    const scheduleData = JSON.parse(localStorage.getItem("doctorSchedule"));
+
+    function renderScheduleTable(data) {
+      if (!data || Object.keys(data).length === 0) {
+        document.getElementById("scheduleTableContainer").innerHTML = "<p>尚未排班。</p>";
+        return;
+      }
+
+      let html = `<table>
+        <tr>
+          <th>日期</th>
+          <th>早診(9:00-12:00)</th>
+          <th>午診(14:00-17:00)</th>
+          <th>晚診(19:00-22:00)</th>
+        </tr>`;
+
+      const sortedDates = Object.keys(data).sort();
+
+      for (let date of sortedDates) {
+        const shifts = data[date];
+        html += `
+          <tr>
+            <td>${date}</td>
+            <td>${shifts.includes("morning") ? "✔️" : ""}</td>
+            <td>${shifts.includes("afternoon") ? "✔️" : ""}</td>
+            <td>${shifts.includes("evening") ? "✔️" : ""}</td>
+          </tr>`;
+      }
+
+      html += "</table>";
+      document.getElementById("scheduleTableContainer").innerHTML = html;
+    }
+
+    renderScheduleTable(scheduleData);
+  </script>
+</body>
+</html>

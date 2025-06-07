@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>病人註冊頁面</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #eef3f7;
+      padding: 40px;
+    }
+
+    .form-container {
+      background-color: #fff;
+      padding: 30px;
+      margin: auto;
+      max-width: 700px;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #2c3e50;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="tel"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    fieldset {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    legend {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .address-group,
+    .emergency-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .address-group input,
+    .emergency-group input {
+      flex: 1 1 45%;
+    }
+
+    .checkbox-group {
+      margin-top: 10px;
+      padding-left: 10px;
+    }
+
+    .checkbox-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: normal;
+    }
+
+    .checkbox-group input[type="text"] {
+      width: 60%;
+      margin-left: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 25px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+  </style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("registerForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const idNumber = document.getElementById("idNumber").value.trim();
+      const dob = document.getElementById("dob").value;
+      const password = document.getElementById("password").value;
+      const phone = document.getElementById("phone").value.trim();
+      const emergencyPhone = document.getElementById("emergency_phone").value.trim();
+
+      const idRegex = /^[A-Z][0-9]{9}$/;
+      const pwRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,15}$/;
+      const phoneRegex = /^[0-9]{10}$/;
+
+      if (!name || !dob || !password || !phone) {
+        alert("請填寫所有欄位！");
+        return;
+      }
+
+      if (!idRegex.test(idNumber)) {
+        alert("身分證/居留證號格式錯誤！需1大寫英文字母+9位數字");
+        return;
+      }
+
+      if (!pwRegex.test(password)) {
+        alert("密碼格式錯誤！必須8~15碼，且含英文大小寫");
+        return;
+      }
+
+      if (!phoneRegex.test(emergencyPhone)) {
+        alert("請輸入正確的緊急聯絡人電話（10位數字）！");
+        return;
+      }
+
+      alert("註冊成功！");
+      window.location.href = "patient_login.html"; // ✅ 成功跳轉
+    });
+  });
+</script>
+
+</head>
+
+<body>
+  <div class="form-container">
+    <h2>病人註冊</h2>
+    <form id="registerForm">
+
+      <label for="name">姓名</label>
+      <input type="text" id="name" placeholder="請輸入真實姓名" required>
+
+      <label for="dob">出生年月日:</label>
+      <input type="date" id="dob" required>
+
+      <label for="idNumber">帳號:</label>
+      <input type="text" id="idNumber" placeholder="請輸入身分證 / 居留證號" required>
+
+      <label for="password">密碼:</label>
+      <input type="password" id="password" placeholder="8~15碼，含英文大小寫" required>
+
+      <label for="phone">手機號碼:</label>
+      <input type="text" id="phone" placeholder="輸入手機號碼" required />
+
+      <fieldset>
+        <legend>現居地址:</legend>
+        <div class="address-group">
+          <input type="text" id="curr_city" placeholder="縣市" required />
+          <input type="text" id="curr_district" placeholder="行政區" required />
+          <input type="text" id="curr_street" placeholder="路街" required />
+          <input type="text" id="curr_lane" placeholder="段/巷/弄" required />
+          <input type="text" id="curr_number" placeholder="門牌號碼" required />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>戶籍地址:</legend>
+        <div class="address-group">
+          <input type="text" id="perm_city" placeholder="縣市" required />
+          <input type="text" id="perm_district" placeholder="行政區" required />
+          <input type="text" id="perm_street" placeholder="路街" required />
+          <input type="text" id="perm_lane" placeholder="段/巷/弄" required />
+          <input type="text" id="perm_number" placeholder="門牌號碼" required />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>緊急聯絡人:</legend>
+        <div class="emergency-group">
+          <input type="text" id="emergency_name" placeholder="姓名" required />
+          <input type="text" id="emergency_phone" placeholder="手機號碼" required />
+          <input type="text" id="emergency_relation" placeholder="關係" required />
+        </div>
+      </fieldset>
+
+      <label>過敏藥物:</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="drug_allergy[]" value="盤尼西林"> 盤尼西林</label>
+        <label><input type="checkbox" name="drug_allergy[]" value="磺胺藥"> 磺胺藥</label>
+        <label><input type="checkbox" name="drug_allergy[]" value="其他"> 其他：
+          <input type="text" name="drug_allergy_other" placeholder="請填寫其他藥物" />
+        </label>
+      </div>
+
+      <label>過敏食物:</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="food_allergy[]" value="花生"> 花生</label>
+        <label><input type="checkbox" name="food_allergy[]" value="海鮮"> 海鮮</label>
+        <label><input type="checkbox" name="food_allergy[]" value="其他"> 其他：
+          <input type="text" name="food_allergy_other" placeholder="請填寫其他食物" />
+        </label>
+      </div>
+
+      <label>過去病史:</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="medical_history[]" value="高血壓"> 高血壓</label>
+        <label><input type="checkbox" name="medical_history[]" value="糖尿病"> 糖尿病</label>
+        <label><input type="checkbox" name="medical_history[]" value="其他"> 其他：
+          <input type="text" name="medical_history_other" placeholder="請填寫其他病史" />
+        </label>
+      </div>
+
+      <button type="submit">註冊</button>
+    </form>
+  </div>
+</body>
+
+</html>

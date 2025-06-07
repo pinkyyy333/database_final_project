@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>病人登入系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f7;
+      padding: 40px;
+    }
+
+    .login-container {
+      background-color: white;
+      padding: 30px;
+      max-width: 400px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #1a73e8;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 25px;
+      background-color: #1a73e8;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1669c1;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>病人登入</h2>
+    <form id="loginForm">
+      <label for="account">帳號:</label>
+      <input type="text" id="account" name="account" placeholder="請輸入身分證 / 居留證號" required>
+
+      <label for="password">密碼:</label>
+      <input type="password" id="password" name="password" placeholder="請輸入密碼" required>
+
+      <button type="submit">登入</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("loginForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const account = document.getElementById("account").value.trim();
+        const password = document.getElementById("password").value;
+
+        const idRegex = /^[A-Z][0-9]{9}$/;
+        const nhicRegex = /^[0-9]{12}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,15}$/;
+
+        if (!(idRegex.test(account) || nhicRegex.test(account))) {
+          alert("帳號格式錯誤，請輸入有效的身分證號、健保卡號或居留證號。");
+          return;
+        }
+
+        if (!passwordRegex.test(password)) {
+          alert("密碼格式錯誤，需 8~15 碼且包含大小寫英文字母。");
+          return;
+        }
+
+        // 模擬帳密驗證
+        const validAccounts = [
+          { account: "A123456789", password: "TestPass123" },
+          { account: "123456789012", password: "AbcDefGhi1" }
+        ];
+
+        const isLoginSuccess = validAccounts.some(acc =>
+          acc.account === account && acc.password === password
+        );
+
+        if (isLoginSuccess) {
+          alert("登入成功！");
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("account", account);
+          localStorage.setItem("role", "patient");
+          window.location.href = "appointment.html";
+        } else {
+          const goToRegister = confirm("登入失敗，帳號或密碼錯誤。\n是否前往註冊頁面？");
+          if (goToRegister) {
+            window.location.href = "register.html";
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

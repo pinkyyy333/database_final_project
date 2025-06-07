@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>醫師端 - 今日病患清單</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('doctor.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .content {
+      background-color: rgba(234, 246, 255, 0.95);
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      color: #003366;
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #38bdf8;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    .status {
+      font-weight: bold;
+    }
+
+    .status.已報到 {
+      color: green;
+    }
+
+    .status.未出現 {
+      color: red;
+    }
+
+    .status.已完成 {
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <h2>今日病患清單</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>姓名</th>
+          <th>身分證</th>
+          <th>看診序號</th>
+          <th>預計看診時間</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody id="patientTableBody">
+        <tr><td colspan="5">載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    fetch('/api/today_patients')
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.getElementById('patientTableBody');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5">今天沒有排程病患。</td></tr>';
+        } else {
+          data.forEach(patient => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${patient.name}</td>
+              <td>${patient.id}</td>
+              <td>${patient.appointmentTime}</td>
+              <td>${patient.vaccine}</td>
+              <td class="status ${patient.status}">${patient.status}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('載入錯誤:', error);
+        document.getElementById('patientTableBody').innerHTML = '<tr><td colspan="5">無法取得資料。</td></tr>';
+      });
+  </script>
+</body>
+</html>
+

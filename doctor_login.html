@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>醫師登入</title>
+  <link rel="stylesheet" href="doctor.css" />
+</head>
+<body>
+  <div class="background">
+    <div class="form-container">
+      <h2>醫師登入</h2>
+      <form id="doctorLoginForm">
+        <label>醫師代號：</label>
+        <input type="text" name="doctorId" pattern="\d{5}" required />
+        
+        <label>密碼：</label>
+        <input type="password" name="password" required />
+        
+        <button type="submit">登入</button>
+        <button type="button" class="register-btn" onclick="window.location.href='doctor_register.html'">註冊帳號</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("doctorLoginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const doctorId = this.doctorId.value.trim();
+      const password = this.password.value;
+
+      fetch('http://localhost:3000/api/doctor-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ doctorId, password })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert("登入成功！");
+            window.location.href = "doctor_home.html";
+          } else {
+            if (confirm("帳號或密碼錯誤，是否前往註冊？")) {
+              window.location.href = "doctor_register.html";
+            }
+          }
+        })
+        .catch(err => {
+          alert("系統錯誤，請稍後再試！");
+          console.error(err);
+        });
+    });
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<style>
+  body {
+    background-color: #f3f7fa;
+    font-family: "Microsoft JhengHei", sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .form-container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 500px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  }
+
+  h1 {
+    text-align: center;
+    color: #0a57a3;
+  }
+
+  form label {
+    display: block;
+    margin: 20px 0 10px;
+    font-weight: bold;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+  fieldset {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+  }
+
+  legend {
+    font-weight: bold;
+    padding: 0 10px;
+    color: #333;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    background-color: #0a57a3;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #084b8a;
+  }
+</style>
+
+<script>
+document.getElementById("editForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const phone = document.getElementById("phone").value.trim();
+  const emergencyPhone = document.getElementById("emergency_phone").value.trim();
+  const phoneRegex = /^09\d{8}$/;
+
+  // 驗證手機號碼格式
+  if (!phoneRegex.test(phone)) {
+    alert("手機號碼格式錯誤！請輸入 09 開頭的 10 碼數字");
+    return;
+  }
+
+  if (!phoneRegex.test(emergencyPhone)) {
+    alert("緊急聯絡人手機號碼格式錯誤！");
+    return;
+  }
+
+  // 驗證所有必填欄位是否有空值
+  const requiredFields = [
+    "curr_city", "curr_district", "curr_street", "curr_lane", "curr_number",
+    "perm_city", "perm_district", "perm_street", "perm_lane", "perm_number",
+    "emergency_name", "emergency_relation"
+  ];
+
+  for (const id of requiredFields) {
+    if (document.getElementById(id).value.trim() === "") {
+      alert("請完整填寫所有欄位！");
+      return;
+    }
+  }
+
+  alert("客戶資料已儲存！");
+  // 可送出資料至後端 API 或儲存在 localStorage
+});
+</script>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Customer Information</title>
+</head>
+<body>
+  <div class="form-container">
+    <h1>編輯個人資料</h1>
+    <form id="editForm">
+
+      <!-- 手機號碼 -->
+      <label>手機號碼:
+        <input type="text" id="phone" placeholder="輸入新的手機號碼" required />
+      </label>
+
+      <label>過敏紀錄:</label>
+        <input type="text" name="new_allergy" placeholder="輸入新的過敏項目" />
+
+      <label>過去病史:</label>
+        <input type="text" name="new_record" placeholder="輸入新的病史紀錄" />
+
+      <!-- 現居地址 -->
+      <fieldset>
+        <legend>現居地址</legend>
+        <input type="text" id="curr_city" placeholder="縣市" required />
+        <input type="text" id="curr_district" placeholder="行政區" required />
+        <input type="text" id="curr_street" placeholder="路街" required />
+        <input type="text" id="curr_lane" placeholder="段/巷/弄" required />
+        <input type="text" id="curr_number" placeholder="門牌號碼" required />
+      </fieldset>
+
+      <!-- 戶籍地址 -->
+      <fieldset>
+        <legend>戶籍地址</legend>
+        <input type="text" id="perm_city" placeholder="縣市" required />
+        <input type="text" id="perm_district" placeholder="行政區" required />
+        <input type="text" id="perm_street" placeholder="路街" required />
+        <input type="text" id="perm_lane" placeholder="段/巷/弄" required />
+        <input type="text" id="perm_number" placeholder="門牌號碼" required />
+      </fieldset>
+      <label><input type="checkbox" id="same_address"> 現居與戶籍相同</label>
+      <script>
+        document.getElementById('same_address').addEventListener('change', function () {
+          if (this.checked) {
+            document.getElementById('reg_city').value = document.getElementById('live_city').value;
+            document.getElementById('reg_district').value = document.getElementById('live_district').value;
+            document.querySelector('input[name="reg_detail"]').value = document.querySelector('input[name="live_detail"]').value;
+          }
+        });
+      </script>
+
+      <!-- 緊急聯絡人 -->
+      <fieldset>
+        <legend>緊急聯絡人</legend>
+        <input type="text" id="emergency_name" placeholder="姓名" required />
+        <input type="text" id="emergency_phone" placeholder="手機號碼" required />
+        <input type="text" id="emergency_relation" placeholder="關係" required />
+      </fieldset>
+
+      <button type="submit">儲存</button>
+    </form>
+  </div>
+
+  <script src="edit_customer.js"></script>
+</body>
+</html>

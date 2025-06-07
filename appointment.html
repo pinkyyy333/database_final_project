@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>醫師團隊與預約掛號</title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background-color: #f7f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 40px 20px;
+    }
+
+    .title {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 40px;
+    }
+
+    .department {
+      margin-bottom: 60px;
+    }
+
+    .department h2 {
+      font-size: 24px;
+      color: #1f3a93;
+      border-left: 5px solid #1f3a93;
+      padding-left: 10px;
+      margin-bottom: 20px;
+    }
+
+    .doctor-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      width: 260px;
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .card img {
+      width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+      background-color: #f0f0f0;
+    }
+
+    .card-content {
+      padding: 15px;
+    }
+
+    .card h3 {
+      margin: 0 0 5px;
+      color: #333;
+    }
+
+    .card p {
+      margin: 5px 0;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .form-container {
+      max-width: 600px;
+      background-color: #fff;
+      margin: 60px auto;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    select,
+    input[type="text"],
+    input[type="date"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      font-size: 16px;
+      transition: border 0.3s ease;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #3399ff;
+      background-color: #fff;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 30px;
+      background-color: #3399ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #007acc;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="title">醫師團隊介紹</h1>
+    <div id="department-container"></div>
+  </div>
+
+  <div class="form-container">
+    <h2>病人預約掛號系統</h2>
+    <form method="POST" action="register.php">
+      <label for="dept_id">選擇科別：</label>
+      <select name="dept_id" id="dept_id" required>
+        <option value="">請選擇</option>
+        <option value="1">耳鼻喉科</option>
+        <option value="2">皮膚科</option>
+      </select>
+
+      <label for="date">選擇日期：</label>
+      <input type="date" name="date" id="date" required>
+
+      <label for="timeslot">選擇時段：</label>
+      <select name="timeslot" id="timeslot" required>
+        <option value="9:00-12:00">9:00-12:00</option>
+        <option value="14:00-17:00">14:00-17:00</option>
+        <option value="19:00-22:00">19:00-22:00</option>
+      </select>
+
+      <label for="doctor_id">選擇醫生：</label>
+      <select name="doctor_id" id="doctor_id" required>
+        <option selected disabled>請先選擇科別與時段</option>
+      </select>
+
+      <label for="patient_id">病人帳號：</label>
+      <input type="text" name="patient_id" id="patient_id" placeholder="請登入後自動填入" required>
+
+      <!-- 【新增提醒設定欄位】 -->
+      <label for="reminder_offset">提醒時間：</label>
+      <select id="reminder_offset" required>
+        <option value="">請選擇提醒時間</option>
+        <option value="60">1 小時前</option>
+        <option value="1440">24 小時前</option>
+      </select>
+
+      <button type="submit">送出預約</button>
+    </form>
+  </div>
+
+  <script>
+    const departments = {
+      "院長": [{
+        name: '陳建民',
+        title: "院長、外科主治醫生",
+        education: "國立台灣大學醫學系",
+        experience: '台大醫院、榮總住院醫師',
+        specialty: "一般外科、痔瘡、疝氣",
+        image: "醫生1.jpg"
+      }],
+      "外科": [{
+        name: '林芳瑜',
+        title: "主治醫師",
+        education: '國立陽明交通大學醫學系',
+        experience: '亞東醫院主治醫師',
+        specialty: '全身表面外傷處理',
+        image: "醫生2.jpg"
+      }],
+      "內科": [{
+        name: '張育誠',
+        title: "主治醫師",
+        education: '高雄醫學大學醫學系',
+        experience: '馬偕醫院',
+        specialty: "胃腸、肝膽疾病",
+        image: "醫生3.jpg"
+      }, {
+        name: '周怡君',
+        title: "主治醫師",
+        education: '中山醫學大學醫學系',
+        experience: '彰基、澄清醫院',
+        specialty: '氣喘、高血壓、心律不整治療',
+        image: "醫生4.jpg"
+      }],
+      "耳鼻喉科": [{
+        name: '李冠廷',
+        title: "主治醫師",
+        education: '中國醫藥大學醫學系',
+        experience: '中醫附醫',
+        specialty: '感冒、眩暈、鼻塞診治',
+        image: "醫生5.jpg"
+      }, {
+        name: '吳宛蓉',
+        title: "主治醫師",
+        education: '馬偕醫學院醫學系',
+        experience: '馬偕耳鼻喉科診所',
+        specialty: '感冒、眩暈、鼻塞診治',
+        image: "醫生6.jpg"
+      }]
+    };
+
+    const container = document.getElementById("department-container");
+    document.querySelector("form").addEventListener("submit", function (e) {
+      const deptText = document.getElementById("dept_id").selectedOptions[0].text;
+      const date = document.getElementById("date").value;
+      const timeslot = document.getElementById("timeslot").value;
+      const doctorText = document.getElementById("doctor_id").selectedOptions[0]?.text || "未知醫生";
+
+      const confirmMsg = `請確認是否預約：\n\n【科別】${deptText}\n【日期】${date}\n【時段】${timeslot}\n【醫師】${doctorText}`;
+
+      if (!confirm(confirmMsg)) {
+        e.preventDefault(); // 取消送出
+      }
+    });
+    
+    for (const dept in departments) {
+      const section = document.createElement("section");
+      section.className = "department";
+
+      const header = document.createElement("h2");
+      header.textContent = dept;
+      section.appendChild(header);
+
+      const list = document.createElement("div");
+      list.className = "doctor-list";
+
+      departments[dept].forEach(doc => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${doc.image}" alt="${doc.name}">
+          <div class="card-content">
+            <h3>${doc.name}</h3>
+            <p><strong>${doc.title}</strong></p>
+            <p><strong>學歷：</strong>${doc.education}</p>
+            <p><strong>經歷：</strong>${doc.experience}</p>
+            <p><strong>專長：</strong>${doc.specialty}</p>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      section.appendChild(list);
+      container.appendChild(section);
+    }
+
+    function scheduleReminder(appointmentDate, timeslot, offsetMinutes, phone) {
+      const [start] = timeslot.split('-');
+      const [hour, minute] = start.split(':').map(Number);
+      const appt = new Date(appointmentDate);
+      appt.setHours(hour, minute, 0, 0);
+      const remindAt = new Date(appt.getTime() - offsetMinutes * 60000);
+      const delay = remindAt - Date.now();
+      if (delay > 0) {
+        setTimeout(() => {
+          alert(`提醒：您於 ${appointmentDate} ${timeslot} 的預約即將到來，簡訊已發送至 ${phone}`);
+          // TODO: 呼叫後端發送真正的簡訊
+        }, delay);
+      }
+    }
+
+    document.getElementById("appointmentForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      // 取值
+      const date = this.date.value;
+      const timeslot = this.timeslot.value;
+      const offset = Number(this.reminder_offset.value);  // 【提醒偏移值】
+      const phone = localStorage.getItem("phone") || "";  // 病人電話
+
+      // TODO: 呼叫後端 POST /api/appointments 建立預約
+
+      // 【呼叫提醒排程】
+      scheduleReminder(date, timeslot, offset, phone);
+      alert("預約成功！提醒已設定。");
+      this.reset();
+    });
+
+    // 登入驗證
+    /*
+    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "patient") {
+      alert("請先以病人身份登入才能使用預約服務！");
+      window.location.href = "patient_login.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const patientAccount = localStorage.getItem("account");
+      if (patientAccount) {
+        const patientInput = document.getElementById("patient_id");
+        patientInput.value = patientAccount;
+        patientInput.readOnly = true;
+      }
+
+      document.getElementById("dept_id").addEventListener("change", loadDoctors);
+      document.getElementById("date").addEventListener("change", loadDoctors);
+      document.getElementById("timeslot").addEventListener("change", loadDoctors);
+    });
+*/
+    async function loadDoctors() {
+      const deptId = document.getElementById("dept_id").value;
+      const date = document.getElementById("date").value;
+      const timeslot = document.getElementById("timeslot").value;
+
+      if (!deptId || !date || !timeslot) return;
+
+      try {
+        const response = await fetch(`get_doctors.php?dept_id=${deptId}&date=${date}&timeslot=${timeslot}`);
+        const data = await response.json();
+
+        const doctorSelect = document.getElementById("doctor_id");
+        doctorSelect.innerHTML = "";
+
+        if (data.length === 0) {
+          const option = document.createElement("option");
+          option.text = "此時段無醫生可預約";
+          option.disabled = true;
+          option.selected = true;
+          doctorSelect.add(option);
+        } else {
+          data.forEach(doc => {
+            const option = document.createElement("option");
+            option.value = doc.doctor_id;
+            option.text = `${doc.name}（剩餘名額：${doc.remaining}）`;
+            option.disabled = doc.remaining === 0;
+            doctorSelect.add(option);
+          });
+        }
+      } catch (err) {
+        alert("無法載入醫生資料，請稍後再試！");
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

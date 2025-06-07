@@ -1,0 +1,95 @@
+<!-- doctor_register.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>醫師註冊</title>
+  <link rel="stylesheet" href="doctor.css" />
+</head>
+<body>
+  <h1>醫師註冊</h1>
+  <form id="registerForm">
+    <label>醫師代號（5位數字）：
+      <input type="text" name="doctorId" pattern="\d{5}" required />
+    </label><br />
+
+    <label>密碼：
+      <input type="password" name="password" required />
+    </label><br />
+
+    <label>部門：
+      <select name="departmentId" required>
+        <option value="D001">內科</option>
+        <option value="D002">外科</option>
+        <option value="D003">耳鼻喉科</option>
+      </select>
+    </label><br />
+
+    <label>姓名（2~4字）：
+      <input type="text" name="name" pattern="^[\u4e00-\u9fa5]{2,4}$" required />
+    </label><br />
+
+    <label>性別：
+      <select name="gender" required>
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
+    </label><br />
+
+    <label>雇用日期：
+      <input type="date" name="hireDate" required />
+    </label><br />
+
+    <label>學歷：
+      <input type="text" name="education" required />
+    </label><br />
+
+    <label>服務經歷：
+      <input type="text" name="experience" />
+    </label><br />
+
+    <label>聯絡電話：
+      <input type="tel" name="phone" pattern="\d{10}" required />
+    </label><br />
+
+    <button type="submit">註冊</button>
+  </form>
+
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = {
+        doctorId: this.doctorId.value.trim(),
+        password: this.password.value,
+        departmentId: this.departmentId.value,
+        name: this.name.value,
+        gender: this.gender.value,
+        hireDate: this.hireDate.value,
+        education: this.education.value,
+        experience: this.experience.value,
+        phone: this.phone.value
+      };
+
+      fetch("http://localhost:3000/api/doctor-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert("註冊成功！請重新登入");
+            window.location.href = "doctor_login.html";
+          } else {
+            alert(data.message || "註冊失敗");
+          }
+        })
+        .catch(err => {
+          alert("伺服器錯誤");
+          console.error(err);
+        });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>更新看診進度</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 30px;
+      text-align: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(to bottom right, #e0f7fa, #ede7f6);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    select, button {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #ffffffdd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    button:hover {
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    .number {
+      font-size: 2em;
+      margin-top: 30px;
+      background-color: #ffffffcc;
+      padding: 20px;
+      border-radius: 12px;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    p {
+      font-size: 1.1em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>即時看診進度更新</h1>
+  <p>今天日期：<span id="today"></span></p>
+  <p>選擇時段：
+    <select id="session">
+      <option value="morning">早診</option>
+      <option value="afternoon">下午診</option>
+      <option value="evening">晚診</option>
+    </select>
+  </p>
+  <button onclick="nextPatient()">下一位病人</button>
+  <div class="number">目前號碼：第 <span id="current">1</span> 號</div>
+
+  <script>
+    const doctorId = localStorage.getItem("doctorId") || "10001";
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById("today").textContent = today;
+
+    const sessionSelect = document.getElementById("session");
+    const numberSpan = document.getElementById("current");
+
+    function getKey() {
+      return `progress_${doctorId}_${today}_${sessionSelect.value}`;
+    }
+
+    function loadProgress() {
+      const current = parseInt(localStorage.getItem(getKey()) || "1", 10);
+      numberSpan.textContent = current;
+    }
+
+    function nextPatient() {
+      let current = parseInt(localStorage.getItem(getKey()) || "1", 10);
+      if (current < 45) current++;
+      localStorage.setItem(getKey(), current);
+      numberSpan.textContent = current;
+    }
+
+    sessionSelect.addEventListener("change", loadProgress);
+    loadProgress();
+  </script>
+</body>
+</html>
+

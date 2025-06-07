@@ -104,17 +104,41 @@
               <td>${patient.name}</td>
               <td>${patient.id}</td>
               <td>${patient.appointmentTime}</td>
-              <td>${patient.vaccine}</td>
-              <td class="status ${patient.status}">${patient.status}</td>
+              <td>${patient.appointmentTime}</td>
+              <td class="status ${patient.status}" data-id="${patient.appointmentId}" data-time="${patient.appointmentTime}">${patient.status}</td>
             `;
             tbody.appendChild(tr);
           });
         }
+        checkNoShow();   // 【4】渲染後立即檢查一次
       })
       .catch(error => {
         console.error('載入錯誤:', error);
         document.getElementById('patientTableBody').innerHTML = '<tr><td colspan="5">無法取得資料。</td></tr>';
       });
+      /**
+     * 【3】自動未出現檢查函式
+     *   - 每分鐘檢查一次已過預約時間但仍為 "booked" 的狀態
+     *   - 標記為 "未出現" 並更新樣式
+     *   - TODO: 呼叫後端 PATCH /api/appointments/:id/status 更新資料庫
+     */
+    function checkNoShow() {
+      const now = new Date();
+      document.querySelectorAll('.status[data-time]').forEach(cell => {
+        const apptTime = new Date(cell.dataset.time);
+        if (cell.textContent === 'booked' && now > apptTime) {
+          const id = cell.dataset.id;
+          cell.textContent = '未出現';
+          cell.classList.remove('booked');
+          cell.classList.add('未出現');
+          cell.classList.add('no-show');
+          // TODO: call backend PATCH `/api/appointments/${id}/status` with { status: 'no_show' }
+        }
+      });
+    }
+
+    // 定時執行
+    setInterval(checkNoShow, 60 * 1000);
   </script>
 </body>
 </html>

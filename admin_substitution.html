@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>管理端 - 醫師替代管理</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; margin-bottom: 20px; }
+    .field { margin-bottom: 20px; }
+    label { display: inline-block; width: 120px; font-weight: bold; }
+    select { width: calc(100% - 130px); padding: 6px; }
+    button {
+      padding: 10px 20px;
+      background-color: #38bdf8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled { background-color: #a0cde8; cursor: not-allowed; }
+    .impacted-list {
+      margin-top: 10px;
+      padding-left: 0;
+      list-style: none;
+    }
+    .impacted-list li {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .message {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .message.success { background-color: #e6ffed; color: #2c662d; }
+    .message.error { background-color: #ffe6e6; color: #992d2d; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>管理端 - 醫師替代管理</h1>
+
+    <div class="field">
+      <label for="absentDoc">請假醫師：</label>
+      <select id="absentDoc">
+        <option value="">-- 請選擇 --</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="substituteDoc">替代醫師：</label>
+      <select id="substituteDoc" disabled>
+        <option value="">-- 請選擇 --</option>
+      </select>
+    </div>
+
+    <button id="assignBtn" disabled>指派替代並通知病患</button>
+
+    <h2>受影響病患清單</h2>
+    <ul class="impacted-list" id="impactedList">
+      <li>請先選擇請假醫師</li>
+    </ul>
+
+    <div class="message success" id="successMsg"></div>
+    <div class="message error" id="errorMsg"></div>
+  </div>
+
+  <script>
+    const absentSelect = document.getElementById('absentDoc');
+    const substituteSelect = document.getElementById('substituteDoc');
+    const impactedList = document.getElementById('impactedList');
+    const assignBtn = document.getElementById('assignBtn');
+    const successMsg = document.getElementById('successMsg');
+    const errorMsg = document.getElementById('errorMsg');
+
+    let doctors = [];
+    let impactedPatients = [];
+
+    // 1. 載入所有醫師列表
+    fetch('/api/doctors')
+      .then(res => res.json())
+      .then(data => {
+        doctors = data;
+        data.forEach(doc => {
+          const opt1 = new Option(doc.name, doc.doctor_id);
+          const opt2 = new Option(doc.name, doc.doctor_id);
+          absentSelect.add(opt1);
+          substituteSelect.add(opt2);
+        });
+      })
+      .catch(err => console.error('醫師列表載入失敗', err));
+
+    // 當選擇請假醫師時，載入受影響病患
+    absentSelect.addEventListener('change', () => {
+      const doctorId = absentSelect.value;
+      substituteSelect.disabled = !doctorId;
+      assignBtn.disabled = true;
+      impactedList.innerHTML = '<li>載入中...</li>';
+      successMsg.style.display = 'none'; errorMsg.style.display = 'none';
+
+      if (!doctorId) {
+        impactedList.innerHTML = '<li>請先選擇請假醫師</li>';
+        return;
+      }
+      // 2. 取得該醫師當日預約病患
+      const today = new Date().toISOString().slice(0,10);
+      fetch(`/api/appointments?doctorId=${doctorId}&date=${today}`)
+        .then(res => res.json())
+        .then(data => {
+          impactedPatients = data;
+          if (data.length === 0) {
+            impactedList.innerHTML = '<li>無受影響病患</li>';
+          } else {
+            impactedList.innerHTML = '';
+            data.forEach(p => {
+              const li = document.createElement('li');
+              li.textContent = `${p.patient_name} - ${p.appointment_time}`;
+              impactedList.appendChild(li);
+            });
+            assignBtn.disabled = false;
+          }
+        })
+        .catch(err => {
+          console.error('載入病患失敗', err);
+          impactedList.innerHTML = '<li>無法載入受影響病患</li>';
+        });
+    });
+
+    // 指派替代並通知病患
+    assignBtn.addEventListener('click', () => {
+      const absentId = absentSelect.value;
+      const substituteId = substituteSelect.value;
+      successMsg.style.display = 'none'; errorMsg.style.display = 'none';
+      if (!absentId || !substituteId) {
+        errorMsg.textContent = '請選擇請假及替代醫師';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      // 3. 呼叫後端進行替代與通知
+      fetch(`/api/substitutions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ absentDoctorId: absentId, substituteDoctorId: substituteId, date: today })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('指派失敗');
+          return res.json();
+        })
+        .then(resp => {
+          successMsg.textContent = '已指派替代並通知所有受影響病患';
+          successMsg.style.display = 'block';
+        })
+        .catch(err => {
+          console.error(err);
+          errorMsg.textContent = '指派或通知過程中發生錯誤';
+          errorMsg.style.display = 'block';
+        });
+    });
+  </script>
+</body>
+</html>

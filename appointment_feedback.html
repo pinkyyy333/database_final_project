@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>病人回饋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #f4f8fc;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px; text-decoration: none; color: #000; font-size: 18px;
+      padding: 5px 10px; border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 200px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar .menu-item {
+      display: block;
+      text-decoration: none;
+      background-color: transparent;
+      color: #26a69a;
+      padding: 12px;
+      border: 2px solid #26a69a;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background-color: #26a69a;
+      color: #fff;
+    }
+    .main {
+      margin-left: 240px;
+      padding: 100px 0 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .container {
+        width: 80%;   /* 寬度改成 90% 視窗寬度 */
+        padding: 40px 40px;
+        margin: 20px auto; /* 讓上下有些空隙 */
+        box-sizing: border-box;
+    }
+    h1 {
+      text-align: center;
+      color: #0a57a3;
+      margin-bottom: 18px;
+      font-size: 2rem;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #333;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      background: #f8fafc;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    #charCount {
+      text-align: right;
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 22px;
+      background-color: #0a57a3;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 2px;
+    }
+    button:hover {
+      background-color: #084b89;
+    }
+    #message {
+      margin-top: 18px;
+      padding: 10px;
+      background-color: #e7f7ec;
+      border: 1px solid #88c9b6;
+      border-radius: 5px;
+      color: #256442;
+      display: none;
+    }
+    .hidden { display: none; }
+    @media (max-width: 700px) {
+      .main { margin-left: 0; padding-top: 120px; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <div class="sidebar">
+    <a href="appointment_news.html" class="menu-item">最新消息</a>
+    <a href="appointment_booking.html" class="menu-item">我要預約</a>
+    <a href="appointment_schedule.html" class="menu-item">查看門診週班表</a>
+    <a href="appointment_vaccine.html" class="menu-item">疫苗接種預約</a>
+    <a href="appointment_profile.html" class="menu-item">個人資料</a>
+    <a href="appointment_feedback.html" class="menu-item active">我要評分</a>
+    <a href="logout.html" class="menu-item">登出</a>
+  </div>
+
+  <div class="main">
+    <div class="container">
+      <h1>治療回饋意見</h1>
+      <form id="feedbackForm">
+        <label for="rating">請給予本次就診滿意度評分（1~5分）</label>
+        <select id="rating" name="rating" required>
+          <option value="">請選擇</option>
+          <option value="1">1 分 - 非常不滿意</option>
+          <option value="2">2 分</option>
+          <option value="3">3 分</option>
+          <option value="4">4 分</option>
+          <option value="5">5 分 - 非常滿意</option>
+        </select>
+        <label for="comment">您的意見（最多200字）</label>
+        <textarea id="comment" name="comment" maxlength="200" required></textarea>
+        <div id="charCount">0 / 200</div>
+        <button type="submit">送出回饋</button>
+      </form>
+      <div id="message" class="hidden"></div>
+    </div>
+  </div>
+  <script>
+    const form = document.getElementById('feedbackForm');
+    const comment = document.getElementById('comment');
+    const charCount = document.getElementById('charCount');
+    const message = document.getElementById('message');
+
+    // 更新字數顯示
+    comment.addEventListener('input', () => {
+      const length = comment.value.length;
+      charCount.textContent = `${length} / 200`;
+    });
+
+    // 表單送出驗證
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const rating = document.getElementById('rating').value;
+      const text = comment.value.trim();
+
+      if (!rating || text.length === 0) {
+        alert('請完整填寫評分與意見內容');
+        return;
+      }
+      if (text.length > 200) {
+        alert('評論不得超過 200 字');
+        return;
+      }
+      message.textContent = "感謝您的寶貴意見！我們會持續改進服務品質。";
+      message.classList.remove("hidden");
+      message.style.display = "block";
+      form.reset();
+      charCount.textContent = "0 / 200";
+    });
+  </script>
+</body>
+</html>

@@ -117,6 +117,10 @@
       <button type="submit">登入</button>
     </form>
     <a class="register-link" href="admin_register.html">沒有帳號？立即註冊</a>
+    <p id="errorMessage" class="hidden" style="color:red; text-align:center;">帳號或密碼錯誤！</p>
+    <style>
+      .hidden { display: none; }
+    </style>
   </div>
 
   <script>
@@ -124,22 +128,31 @@
       e.preventDefault();
       const username = this.username.value.trim();
       const password = this.password.value;
-      // 保留原有後端呼叫邏輯
-      fetch('/api/admin-login', {
+
+      fetch('http://localhost:8080/api/admin-login', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({username, password})
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('伺服器錯誤');
+        return res.json();
+      })
       .then(data => {
         if (data.success) {
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('role', 'admin');
           window.location.href = 'admin_dashboard.html';
         } else {
-          document.getElementById('errorMessage').classList.remove('hidden');
+          const errElem = document.getElementById('errorMessage');
+          errElem.classList.remove('hidden');
         }
       })
-      .catch(_ => alert('系統錯誤'));
+      .catch(err => {
+        alert('系統錯誤，請稍後再試');
+        console.error(err);
+      });
     });
-  </script>
+    </script>
 </body>
 </html>

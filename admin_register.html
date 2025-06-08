@@ -131,7 +131,7 @@
 
   <div class="form-container">
     <h2>管理者註冊</h2>
-    <form id="registerForm" method="POST" action="admin_register.php">
+    <form id="registerForm">
       <label for="name">姓名</label>
       <input type="text" id="name" name="name" placeholder="請輸入姓名" required>
 
@@ -171,5 +171,59 @@
     </form>
     <a class="register-link" href="admin_login.html">已有帳號？立即登入</a>
   </div>
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const formData = {
+        name: this.name.value.trim(),
+        dob: this.dob.value,
+        managerId: this.idNumber.value.trim(),
+        password: this.password.value,
+        phone: this.phone.value.trim(),
+        address: {
+          city: this.city.value.trim(),
+          district: this.district.value.trim(),
+          street: this.street.value.trim(),
+          lane: this.lane.value.trim(),
+          number: this.number.value.trim()
+        },
+        emergency_contact: {
+          name: this.emergency_name.value.trim(),
+          phone: this.emergency_phone.value.trim(),
+          relation: this.emergency_relation.value.trim()
+        }
+      };
+
+      // 基本前端驗證
+      if (!formData.name || !formData.dob || !formData.managerId || !formData.password || !formData.phone) {
+        alert("請填寫所有必填欄位！");
+        return;
+      }
+      // 你也可以加更多驗證...
+
+      fetch("http://localhost:8080/api/admin-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("伺服器錯誤");
+        return res.json();
+      })
+      .then(data => {
+        if (data.success) {
+          alert("註冊成功！請重新登入");
+          window.location.href = "admin_login.html";
+        } else {
+          alert(data.message || "註冊失敗");
+        }
+      })
+      .catch(err => {
+        alert("網路錯誤或伺服器無回應，請稍後再試");
+        console.error(err);
+      });
+    });
+    </script>
 </body>
 </html>

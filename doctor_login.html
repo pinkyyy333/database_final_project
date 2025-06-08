@@ -114,7 +114,7 @@
 
   <div class="login-container">
     <h2>醫師登入</h2>
-    <form id="doctorLoginForm" method="POST" action="doctor_login.php">
+    <form id="doctorLoginForm">
       <label for="doctorId">醫師代號：</label>
       <input type="text" id="doctorId" name="doctorId" pattern="\d{5}" placeholder="請輸入5位數醫師代號" required />
       
@@ -132,16 +132,30 @@
       const doctorId = this.doctorId.value.trim();
       const password = this.password.value;
 
-      // 保留原 fetch API 與路由
+      if (!/^\d{5}$/.test(doctorId)) {
+        alert("醫師代號格式錯誤，需5位數字");
+        return;
+      }
+      if (!password) {
+        alert("請輸入密碼");
+        return;
+      }
+
       fetch('http://localhost:8080/api/doctor-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ doctorId, password })
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("伺服器錯誤");
+          return res.json();
+        })
         .then(data => {
           if (data.success) {
             alert("登入成功！");
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("role", "doctor");
+            localStorage.setItem("doctorId", doctorId);
             window.location.href = "doctor_home.html";
           } else {
             if (confirm("帳號或密碼錯誤，是否前往註冊？")) {

@@ -174,12 +174,26 @@
         phone: this.phone.value
       };
 
+      // 基本驗證
+      if (!/^\d{5}$/.test(formData.doctorId)) {
+        alert("醫師代號必須為5位數字");
+        return;
+      }
+      if (!formData.password) {
+        alert("密碼不可空白");
+        return;
+      }
+      // 其他可加
+
       fetch("http://localhost:8080/api/doctor-register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("伺服器錯誤");
+          return res.json();
+        })
         .then(data => {
           if (data.success) {
             alert("註冊成功！請重新登入");
@@ -189,10 +203,11 @@
           }
         })
         .catch(err => {
-          alert("伺服器錯誤");
+          alert("伺服器錯誤，請稍後再試");
           console.error(err);
         });
     });
+
   </script>
 </body>
 </html>

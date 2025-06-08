@@ -129,7 +129,7 @@
       const username = this.username.value.trim();
       const password = this.password.value;
 
-      fetch('http://localhost:8080/api/admin-login', {
+      fetch('http://localhost:8080/api/v1/manager/login', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({username, password})

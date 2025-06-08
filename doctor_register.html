@@ -183,31 +183,35 @@
         alert("密碼不可空白");
         return;
       }
-      // 其他可加
 
-      fetch("http://localhost:8080/api/doctor-register", {
+      fetch("http://localhost:8080/api/v1/doctors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          doctor_id: formData.doctorId,
+          password: formData.password,
+          dept_id: formData.departmentId,
+          doctor_name: formData.name,
+          doctor_info: `性別:${formData.gender}, 雇用:${formData.hireDate}`
+        })
       })
-        .then(res => {
-          if (!res.ok) throw new Error("伺服器錯誤");
-          return res.json();
-        })
-        .then(data => {
-          if (data.success) {
-            alert("註冊成功！請重新登入");
-            window.location.href = "doctor_login.html";
-          } else {
-            alert(data.message || "註冊失敗");
-          }
-        })
-        .catch(err => {
-          alert("伺服器錯誤，請稍後再試");
-          console.error(err);
-        });
+      .then(res => {
+        if (!res.ok) throw new Error("伺服器錯誤");
+        return res.json();
+      })
+      .then(data => {
+        if (data.success) {
+          alert("註冊成功！請重新登入");
+          window.location.href = "doctor_login.html";
+        } else {
+          alert(data.message || "註冊失敗");
+        }
+      })
+      .catch(err => {
+        alert("伺服器錯誤，請稍後再試");
+        console.error(err);
+      });
     });
-
   </script>
 </body>
 </html>

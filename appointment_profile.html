@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>病人個人資料</title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background-color: #f0f2f5;
+      margin: 0; padding: 0;
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px; text-decoration: none; color: #000; font-size: 18px;
+      padding: 5px 10px; border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 200px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar .menu-item {
+      display: block;
+      text-decoration: none;
+      background-color: transparent;
+      color: #26a69a;
+      padding: 12px;
+      border: 2px solid #26a69a;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background-color: #26a69a;
+      color: #fff;
+    }
+    .main {
+      margin-left: 240px;
+      padding: 100px 40px 40px;
+      max-width: 900px;
+      margin-right: auto;
+      justify-content: center;
+    }
+    .profile-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 5px;
+      margin-bottom: 20px;
+    }
+    .info-group {
+      margin-bottom: 20px;
+    }
+    .info-group label {
+      font-weight: bold;
+      color: #34495e;
+    }
+    .info-group p {
+      margin: 4px 0 12px;
+      color: #555;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .edit-btn {
+      margin-bottom: 15px;
+      display: inline-block;
+      padding: 8px 16px;
+      background: #0a57a3;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .edit-btn:hover {
+      background: #084b89;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <div class="sidebar">
+    <a href="appointment_news.html" class="menu-item">最新消息</a>
+    <a href="appointment_booking.html" class="menu-item">我要預約</a>
+    <a href="appointment_schedule.html" class="menu-item">查看門診週班表</a>
+    <a href="appointment_vaccine.html" class="menu-item">疫苗接種預約</a>
+    <a href="appointment_profile.html" class="menu-item active">個人資料</a>
+    <a href="appointment_feedback.html" class="menu-item">我要評分</a>
+    <a href="logout.html" class="menu-item">登出</a>
+  </div>
+
+  <main class="main">
+    <div class="profile-container">
+      <a href="appointment_profile_edit.html" class="edit-btn">編輯個人資料</a>
+      <h2>病人基本資料</h2>
+
+      <div class="info-group"><label>帳號：</label><p id="account"></p></div>
+      <div class="info-group"><label>姓名：</label><p id="name"></p></div>
+      <div class="info-group"><label>出生年月日：</label><p id="birthdate"></p></div>
+      <div class="info-group"><label>手機號碼：</label><p id="phone"></p></div>
+      <div class="info-group"><label>現居地址：</label><p id="current_address"></p></div>
+      <div class="info-group"><label>戶籍地址：</label><p id="registered_address"></p></div>
+      <div class="info-group"><label>緊急聯絡人：</label><p id="emergency_contact"></p></div>
+      <div class="info-group"><label>過敏藥物：</label><p id="allergy_drugs"></p></div>
+      <div class="info-group"><label>過敏食物：</label><p id="allergy_foods"></p></div>
+      <div class="info-group"><label>過去病史：</label><p id="medical_history"></p></div>
+
+      <h2>預約紀錄</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>時段</th>
+            <th>科別</th>
+            <th>醫師</th>
+          </tr>
+        </thead>
+        <tbody id="appointments"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    // 假資料示範，實際改成fetch後端
+    const patientData = {
+      account: "patient001",
+      name: "王小明",
+      birthdate: "1990-05-20",
+      phone: "0912345678",
+      current_address: "台北市中山區南京東路三段100號",
+      registered_address: "新北市板橋區文化路二段200號",
+      emergency_contact: "王媽媽 0933222111",
+      allergy_drugs: "青黴素",
+      allergy_foods: "花生",
+      medical_history: "氣喘、鼻過敏"
+    };
+
+    const appointmentRecords = [
+      { date: "2025-06-10", time: "9:00-12:00", dept: "內科", doctor: "張育誠" },
+      { date: "2025-06-15", time: "14:00-17:00", dept: "耳鼻喉科", doctor: "吳宛蓉" }
+    ];
+
+    for (const key in patientData) {
+      const el = document.getElementById(key);
+      if (el) el.textContent = patientData[key];
+    }
+
+    const tbody = document.getElementById("appointments");
+    appointmentRecords.forEach(record => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${record.date}</td>
+        <td>${record.time}</td>
+        <td>${record.dept}</td>
+        <td>${record.doctor}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  </script>
+</body>
+</html>

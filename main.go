@@ -24,6 +24,7 @@ func main() {
 	routes.RegisterPatientRoutes(r)
 	routes.RegisterManagerRoutes(r)
 	routes.RegisterBonusRoutes(r)
-
+	routes.RegisterFeedbackRoutes(r)
+	routes.RegisterDepartmentRoutes(r)
 	r.Run()
 }

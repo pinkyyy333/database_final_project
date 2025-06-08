@@ -70,47 +70,58 @@ func RegisterPatient(c *gin.Context) {
 
 // LoginPatient 病患登入
 func LoginPatient(c *gin.Context) {
-	var req struct {
-		PatientID string `json:"patient_id"`
-		Password  string `json:"password"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "參數錯誤: " + err.Error(), "code": 400})
-		return
-	}
+    var req struct {
+        PatientID string `json:"patient_id"`
+        Password  string `json:"password"`
+    }
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "參數錯誤: " + err.Error(), "code": 400})
+        return
+    }
 
-	var p models.Patient
-	if err := db.DB.First(&p, "Patient_ID = ?", req.PatientID).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "帳號或密碼錯誤", "code": 401})
-		return
-	}
+    var p models.Patient
+    if err := db.DB.First(&p, "Patient_ID = ?", req.PatientID).Error; err != nil {
+        fmt.Println("DB 查詢錯誤:", err)
+        c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "帳號或密碼錯誤", "code": 401})
+        return
+    }
 
-	if bcrypt.CompareHashAndPassword([]byte(p.Password), []byte(req.Password)) != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "帳號或密碼錯誤", "code": 401})
-		return
-	}
+    fmt.Printf("DB PatientID: %s, PasswordHash: %s\n", p.PatientID, p.Password)
+    fmt.Printf("Input password: %s\n", req.Password)
 
-	// 簽發 JWT
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "伺服器未設定 JWT_SECRET", "code": 500})
-		return
-	}
-	exp := time.Now().Add(24 * time.Hour)
-	claims := JWTClaims{
-		PatientID: req.PatientID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(exp),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Token 產生失敗", "code": 500})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "token": token})
+    err := bcrypt.CompareHashAndPassword([]byte(p.Password), []byte(req.Password))
+    if err != nil {
+        fmt.Println("bcrypt.CompareHashAndPassword error:", err)
+        c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "帳號或密碼錯誤", "code": 401})
+        return
+    }
+
+    secret := os.Getenv("JWT_SECRET")
+    if secret == "" {
+        fmt.Println("JWT_SECRET 未設定")
+        c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "伺服器未設定 JWT_SECRET", "code": 500})
+        return
+    }
+
+    exp := time.Now().Add(24 * time.Hour)
+    claims := JWTClaims{
+        PatientID: req.PatientID,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(exp),
+            IssuedAt:  jwt.NewNumericDate(time.Now()),
+        },
+    }
+
+    token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+    if err != nil {
+        fmt.Println("JWT token generation error:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Token 產生失敗", "code": 500})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"success": true, "token": token})
 }
+
 
 // GetPatientProfile 取得個人資料
 func GetPatientProfile(c *gin.Context) {

@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>醫師首頁 - 最新消息</title>
+  <meta charset="UTF-8">
+  <title>我的班表</title>
   <style>
     body {
-      font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
-      background-color: #f7f9fa;
-      margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
+      margin: 20px;
     }
     .navbar {
       position: fixed;
@@ -63,33 +60,25 @@
       background-color: #26a69a;
       color: #fff;
     }
-    .main {
-      margin-left: 240px;
-      padding: 80px 30px 30px;
+    h1 {
+      color: #0055aa;
     }
-    .section-title {
-      font-size: 2rem;
-      color: #333;
-      margin-bottom: 30px;
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
       text-align: center;
     }
-    .news-item {
-      background: #fff;
-      padding: 20px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    th {
+      background-color: #f0f0f0;
     }
-    .news-title {
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-bottom: 8px;
-      color: #0052a5;
-    }
-    .news-date {
-      color: #888;
-      font-size: 0.9rem;
-      margin-bottom: 10px;
+    .main-content {
+      margin-left: 220px; /* 側邊欄 220px + 間隔 20px */
+      padding: 50px;
     }
   </style>
 </head>
@@ -109,32 +98,54 @@
   </header>
 
   <aside class="sidebar">
-    <a href="doctor_home.html" class="menu-item active">最新消息</a>
+    <a href="doctor_home.html" class="menu-item">最新消息</a>
     <a href="doctor_schedule.html" class="menu-item">設定排班</a>
-    <a href="doctor_viewschedule.html" class="menu-item">查看班表</a>
+    <a href="doctor_viewschedule.html" class="menu-item active">查看班表</a>
     <a href="doctor_patients.html" class="menu-item">病患清單</a>
     <a href="doctor_update_progress.html" class="menu-item">即時看診進度更新</a>
     <a href="doctor_selectpatient.html" class="menu-item">病患病歷及回饋查詢</a>
     <a href="logout.html" class="menu-item">登出</a>
   </aside>
+  <div class="main-content">
+    <h1>醫師班表一覽</h1>
+    <div id="scheduleTableContainer"></div>
+  </div>
 
-  <main class="main">
-    <h2 class="section-title">最新消息</h2>
-    <div class="news-item">
-      <div class="news-title">新增皮膚科門診醫師公告</div>
-      <div class="news-date">2024-06-05</div>
-      <p>即日起，本院皮膚科新增王大明醫師，每週一、三上午時段門診。</p>
-    </div>
-    <div class="news-item">
-      <div class="news-title">疫苗接種最新政策</div>
-      <div class="news-date">2024-05-30</div>
-      <p>政府最新疫苗接種政策已公布，65歲以上長者可免費接種流感疫苗，即日起可透過系統預約。</p>
-    </div>
-    <div class="news-item">
-      <div class="news-title">端午節休診公告</div>
-      <div class="news-date">2024-05-14</div>
-      <p>因端午節連續假期，5月30日至6月1日本院各科休診，敬請見諒。</p>
-    </div>
-  </main>
+  <script>
+    const scheduleData = JSON.parse(localStorage.getItem("doctorSchedule"));
+
+    function renderScheduleTable(data) {
+      if (!data || Object.keys(data).length === 0) {
+        document.getElementById("scheduleTableContainer").innerHTML = "<p>尚未排班。</p>";
+        return;
+      }
+
+      let html = `<table>
+        <tr>
+          <th>日期</th>
+          <th>早診(9:00-12:00)</th>
+          <th>午診(14:00-17:00)</th>
+          <th>晚診(19:00-22:00)</th>
+        </tr>`;
+
+      const sortedDates = Object.keys(data).sort();
+
+      for (let date of sortedDates) {
+        const shifts = data[date];
+        html += `
+          <tr>
+            <td>${date}</td>
+            <td>${shifts.includes("morning") ? "✔️" : ""}</td>
+            <td>${shifts.includes("afternoon") ? "✔️" : ""}</td>
+            <td>${shifts.includes("evening") ? "✔️" : ""}</td>
+          </tr>`;
+      }
+
+      html += "</table>";
+      document.getElementById("scheduleTableContainer").innerHTML = html;
+    }
+
+    renderScheduleTable(scheduleData);
+  </script>
 </body>
 </html>

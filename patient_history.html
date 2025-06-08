@@ -5,22 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>病歷與回饋查詢</title>
   <style>
+    /* 保留原本的 CSS */
     body {
       font-family: Arial, sans-serif;
       background: #f8fafc;
       padding: 30px;
       color: #111;
     }
-
     h2 {
       color: #1d4ed8;
       margin-bottom: 20px;
     }
-
     .section {
       margin-bottom: 30px;
     }
-
     .record, .feedback {
       background: #fff;
       border: 1px solid #ccc;
@@ -28,16 +26,13 @@
       border-radius: 10px;
       margin-bottom: 10px;
     }
-
     .record h4, .feedback h4 {
       margin: 0 0 5px;
       color: #0f172a;
     }
-
     .feedback p {
       margin: 5px 0;
     }
-
     .stat {
       background: #e0f2fe;
       padding: 10px;
@@ -61,81 +56,88 @@
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const patientId = urlParams.get("patientId");
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const patientId = urlParams.get("patientId");
+      const token = localStorage.getItem("token");
+      if (!patientId || !token) {
+        alert("請先登入");
+        return;
+      }
 
-    // 假資料：病人姓名對照
-    const patientNames = {
-      "P001": "王小明",
-      "P002": "陳美華",
-      "P003": "林志玲"
-    };
+      // 顯示標題
+      document.querySelector("h2").textContent = `${patientId} 的病歷與回饋`;
 
-    // 假資料：病歷紀錄
-    const medicalHistory = {
-      "P001": [
-        { date: "2025-04-10", diagnosis: "感冒", treatment: "開立感冒藥" },
-        { date: "2025-05-02", diagnosis: "咳嗽", treatment: "開立止咳藥" }
-      ],
-      "P002": [
-        { date: "2025-03-12", diagnosis: "過敏性鼻炎", treatment: "抗組織胺處方" }
-      ]
-    };
+      // 1. 取得病患所有預約
+      fetch(`http://localhost:8080/api/v1/appointments/patient/${patientId}`, {
+        headers: { "Authorization": "Bearer " + token }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.message);
+        const appts = data.appointments || [];
+        const recDiv = document.getElementById("medicalRecords");
+        if (appts.length === 0) {
+          recDiv.innerHTML += "<p>尚無病歷資料。</p>";
+        } else {
+          appts.forEach(a => {
+            recDiv.innerHTML += `
+              <div class="record">
+                <h4>📅 日期：${new Date(a.appointment_time).toISOString().slice(0,10)}</h4>
+                <p>服務類型：${a.service_type}</p>
+                <p>狀態：${a.status}</p>
+              </div>`;
+          });
+        }
+        return appts;
+      })
+      // 2. 取得並過濾回饋
+      .then(appts => {
+        const uniqueDoctors = [...new Set(appts.map(a => a.doctor_id))];
+        const feedbackPromises = uniqueDoctors.map(docId =>
+          fetch(`http://localhost:8080/api/v1/doctors/${docId}/feedbacks`, {
+            headers: { "Authorization": "Bearer " + token }
+          }).then(r => r.json())
+        );
+        return Promise.all(feedbackPromises)
+               .then(arrays => ({ arrays, appts }));
+      })
+      .then(({ arrays, appts }) => {
+        const fbDiv = document.getElementById("feedbackSection");
+        let allFeedbacks = [];
+        arrays.forEach(obj => {
+          if (!obj.error) {
+            // GORM 回傳的 feedbacks 附帶 appointment，過濾出此 patient 的
+            const fbs = obj.feedbacks.filter(f => {
+              return f.Appointment && f.Appointment.patient_id === patientId;
+            });
+            allFeedbacks = allFeedbacks.concat(fbs);
+          }
+        });
 
-    // 假資料：回饋紀錄
-    const feedbackData = {
-      "P001": [
-        { rating: 5, comment: "醫師很親切，解釋清楚" },
-        { rating: 4, comment: "看診速度快，但稍微趕" }
-      ],
-      "P002": [
-        { rating: 3, comment: "還可以，但等很久" }
-      ]
-    };
-
-    // 更新頁面標題
-    const name = patientNames[patientId] || "未知病人";
-    document.querySelector("h2").textContent = `${name} 的病歷與回饋`;
-
-    // 載入病歷
-    const recordList = medicalHistory[patientId] || [];
-    const recordsDiv = document.getElementById("medicalRecords");
-
-    if (recordList.length === 0) {
-      recordsDiv.innerHTML += "<p>尚無病歷資料。</p>";
-    } else {
-      recordList.forEach(r => {
-        recordsDiv.innerHTML += `
-          <div class="record">
-            <h4>📅 日期：${r.date}</h4>
-            <p>診斷：${r.diagnosis}</p>
-            <p>治療：${r.treatment}</p>
-          </div>
-        `;
+        if (allFeedbacks.length === 0) {
+          fbDiv.innerHTML += "<p>尚無回饋資料。</p>";
+        } else {
+          let sum = 0;
+          allFeedbacks.forEach(f => {
+            sum += f.feedback_rating;
+            fbDiv.innerHTML += `
+              <div class="feedback">
+                <h4>⭐ 評分：${f.feedback_rating}</h4>
+                <p>${f.patient_comment}</p>
+              </div>
+            `;
+          });
+          const avg = (sum / allFeedbacks.length).toFixed(1);
+          document.getElementById("averageRating").textContent =
+            `平均評分：${avg} / 5`;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("資料載入失敗：" + err.message);
       });
-    }
-
-    // 載入回饋
-    const feedbackList = feedbackData[patientId] || [];
-    const feedbackDiv = document.getElementById("feedbackSection");
-    const avgRatingDiv = document.getElementById("averageRating");
-
-    if (feedbackList.length === 0) {
-      feedbackDiv.innerHTML += "<p>尚無回饋資料。</p>";
-    } else {
-      let total = 0;
-      feedbackList.forEach(f => {
-        total += f.rating;
-        feedbackDiv.innerHTML += `
-          <div class="feedback">
-            <h4>⭐ 評分：${f.rating}</h4>
-            <p>${f.comment}</p>
-          </div>
-        `;
-      });
-      const avg = (total / feedbackList.length).toFixed(1);
-      avgRatingDiv.textContent = `平均評分：${avg} / 5`;
-    }
+    });
   </script>
 </body>
 </html>

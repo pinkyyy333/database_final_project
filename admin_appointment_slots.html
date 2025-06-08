@@ -2,6 +2,13 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <script>
+  // ── 新增：檢查登入 Token，若無則回到登入頁
+  const token = localStorage.getItem('manager_token');
+  if (!token) {
+    location.href = 'admin_login.html';
+  }
+</script>
   <meta charset="UTF-8" />
   <title>可預約時段設定</title>
 </head>

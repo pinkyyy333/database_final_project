@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <script>
+  // 後端 API Base URL
+  const API_BASE = "http://localhost:8080/api/v1";
+  // 登入後取得的 JWT
+  const token = localStorage.getItem("token");
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>管理者登入系統</title>
@@ -133,6 +139,7 @@
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({username, password})
+        
       })
       .then(res => {
         if (!res.ok) throw new Error('伺服器錯誤');

@@ -48,7 +48,91 @@
 </style>
 
 <script>
-  
+document.addEventListener('DOMContentLoaded', function() {
+  const token = localStorage.getItem('token');
+  const patientId = localStorage.getItem('patient_id');
+  if (!token || !patientId) {
+    alert('請先登入並帶入 patient_id');
+    return;
+  }
+
+  // 1. 取得並填入基本資訊＋過敏、過去病史
+  fetch('http://localhost:8080/api/v1/patients/profile', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(res => res.json())
+  .then(data => {
+    const p = data.patient;
+    // 填基本資訊
+    const infoPs = document.querySelectorAll('.profile p');
+    infoPs[0].textContent = '姓名：' + p.patient_name;
+    infoPs[1].textContent = '身分證字號：' + p.patient_id;
+    infoPs[2].textContent = '出生年月日：' + p.patient_birth;
+
+    // 填過敏
+    const allergySection = document.querySelector('.allergy');
+    const uls = allergySection.querySelectorAll('ul');
+    uls[0].innerHTML = '';
+    (p.allergies?.drugs || []).forEach(d => {
+      const li = document.createElement('li');
+      li.textContent = `${d.name} - ${d.severity} - ${d.reaction}`;
+      uls[0].appendChild(li);
+    });
+    uls[1].innerHTML = '';
+    (p.allergies?.foods || []).forEach(f => {
+      const li = document.createElement('li');
+      li.textContent = `${f.name} - ${f.severity} - ${f.reaction}`;
+      uls[1].appendChild(li);
+    });
+
+    // 填過去病史（第二個 .history）
+    const pastSection = document.querySelectorAll('.history')[1];
+    const pastUl = pastSection.querySelector('ul');
+    pastUl.innerHTML = '';
+    (p.past_history || []).forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      pastUl.appendChild(li);
+    });
+  })
+  .catch(err => {
+    console.error(err);
+    alert('取得個人資料失敗：' + err.message);
+  });
+
+  // 2. 取得並填入歷次看診紀錄（第一個 .history）
+  fetch(`http://localhost:8080/api/v1/appointments/patient/${patientId}`, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(res => res.json())
+  .then(data => {
+    const appts = data.appointments || [];
+    const apptSection = document.querySelector('.history');
+    // 移除原本的 .record 節點
+    apptSection.querySelectorAll('.record').forEach(r => r.remove());
+
+    if (appts.length === 0) {
+      apptSection.innerHTML += '<p>尚無看診紀錄。</p>';
+    } else {
+      appts.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'record';
+        div.innerHTML = `
+          <p><strong>日期：</strong>${new Date(a.appointment_time).toISOString().slice(0,10)}</p>
+          <p><strong>科別：</strong>${a.department_name || a.department_id}</p>
+          <p><strong>主訴：</strong>${a.service_type}</p>
+          <p><strong>診斷：</strong>${a.diagnosis || '—'}</p>
+          <p><strong>處方：</strong>${a.prescription || a.treatment || '—'}</p>
+        `;
+        apptSection.appendChild(div);
+      });
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('取得看診紀錄失敗：' + err.message);
+  });
+});
 </script>
 
 <head>

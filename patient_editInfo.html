@@ -1,129 +1,89 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
-<style>
-  body {
-    background-color: #f3f7fa;
-    font-family: "Microsoft JhengHei", sans-serif;
-    display: flex;
-    justify-content: center;
-    padding: 40px;
-  }
-
-  .form-container {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    width: 500px;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-  }
-
-  h1 {
-    text-align: center;
-    color: #0a57a3;
-  }
-
-  form label {
-    display: block;
-    margin: 20px 0 10px;
-    font-weight: bold;
-  }
-
-  input[type="text"] {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
-
-  fieldset {
-    border: 1px solid #ccc;
-    padding: 15px;
-    border-radius: 5px;
-    margin-top: 15px;
-  }
-
-  legend {
-    font-weight: bold;
-    padding: 0 10px;
-    color: #333;
-  }
-
-  button {
-    width: 100%;
-    padding: 12px;
-    background-color: #0a57a3;
-    color: white;
-    font-size: 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background-color: #084b8a;
-  }
-</style>
-
-<script>
-document.getElementById("editForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-
-  const phone = document.getElementById("phone").value.trim();
-  const emergencyPhone = document.getElementById("emergency_phone").value.trim();
-  const phoneRegex = /^09\d{8}$/;
-
-  // 驗證手機號碼格式
-  if (!phoneRegex.test(phone)) {
-    alert("手機號碼格式錯誤！請輸入 09 開頭的 10 碼數字");
-    return;
-  }
-
-  if (!phoneRegex.test(emergencyPhone)) {
-    alert("緊急聯絡人手機號碼格式錯誤！");
-    return;
-  }
-
-  // 驗證所有必填欄位是否有空值
-  const requiredFields = [
-    "curr_city", "curr_district", "curr_street", "curr_lane", "curr_number",
-    "perm_city", "perm_district", "perm_street", "perm_lane", "perm_number",
-    "emergency_name", "emergency_relation"
-  ];
-
-  for (const id of requiredFields) {
-    if (document.getElementById(id).value.trim() === "") {
-      alert("請完整填寫所有欄位！");
-      return;
-    }
-  }
-
-  alert("客戶資料已儲存！");
-  // 可送出資料至後端 API 或儲存在 localStorage
-});
-</script>
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Edit Customer Information</title>
+  <style>
+    body {
+      background-color: #f3f7fa;
+      font-family: "Microsoft JhengHei", sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .form-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 500px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #0a57a3;
+    }
+
+    form label {
+      display: block;
+      margin: 20px 0 10px;
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+
+    legend {
+      font-weight: bold;
+      padding: 0 10px;
+      color: #333;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0a57a3;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #084b8a;
+    }
+  </style>
 </head>
 <body>
   <div class="form-container">
     <h1>編輯個人資料</h1>
     <form id="editForm">
-
       <!-- 手機號碼 -->
       <label>手機號碼:
         <input type="text" id="phone" placeholder="輸入新的手機號碼" required />
       </label>
 
+      <!-- 過敏與病史 -->
       <label>過敏紀錄:</label>
-        <input type="text" name="new_allergy" placeholder="輸入新的過敏項目" />
+      <input type="text" id="new_allergy" name="new_allergy" placeholder="輸入新的過敏項目" />
 
       <label>過去病史:</label>
-        <input type="text" name="new_record" placeholder="輸入新的病史紀錄" />
+      <input type="text" id="new_record" name="new_record" placeholder="輸入新的病史紀錄" />
 
       <!-- 現居地址 -->
       <fieldset>
@@ -145,15 +105,6 @@ document.getElementById("editForm").addEventListener("submit", function(e) {
         <input type="text" id="perm_number" placeholder="門牌號碼" required />
       </fieldset>
       <label><input type="checkbox" id="same_address"> 現居與戶籍相同</label>
-      <script>
-        document.getElementById('same_address').addEventListener('change', function () {
-          if (this.checked) {
-            document.getElementById('reg_city').value = document.getElementById('live_city').value;
-            document.getElementById('reg_district').value = document.getElementById('live_district').value;
-            document.querySelector('input[name="reg_detail"]').value = document.querySelector('input[name="live_detail"]').value;
-          }
-        });
-      </script>
 
       <!-- 緊急聯絡人 -->
       <fieldset>
@@ -167,6 +118,128 @@ document.getElementById("editForm").addEventListener("submit", function(e) {
     </form>
   </div>
 
-  <script src="edit_customer.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("請先登入！");
+        window.location.href = "patient_login.html";
+        return;
+      }
+
+      // 載入現有資料
+      fetch("http://localhost:8080/api/v1/patients/profile", {
+        headers: { "Authorization": "Bearer " + token }
+      })
+      .then(res => res.json())
+      .then(r => {
+        if (r.error) {
+          alert("取得資料失敗：" + r.message);
+          return;
+        }
+        const p = r.patient;
+        document.getElementById("phone").value = p.patient_phone || "";
+        document.getElementById("new_allergy").value = p.new_allergy || "";
+        document.getElementById("new_record").value = p.new_record || "";
+        document.getElementById("curr_city").value = p.curr_city || "";
+        document.getElementById("curr_district").value = p.curr_district || "";
+        document.getElementById("curr_street").value = p.curr_street || "";
+        document.getElementById("curr_lane").value = p.curr_lane || "";
+        document.getElementById("curr_number").value = p.curr_number || "";
+        document.getElementById("perm_city").value = p.perm_city || "";
+        document.getElementById("perm_district").value = p.perm_district || "";
+        document.getElementById("perm_street").value = p.perm_street || "";
+        document.getElementById("perm_lane").value = p.perm_lane || "";
+        document.getElementById("perm_number").value = p.perm_number || "";
+        document.getElementById("emergency_name").value = p.emergency_name || "";
+        document.getElementById("emergency_phone").value = p.emergency_phone || "";
+        document.getElementById("emergency_relation").value = p.emergency_relation || "";
+      })
+      .catch(() => {
+        alert("無法連線至後端，請稍後再試");
+      });
+    });
+
+    // 當勾選「現居與戶籍相同」時，自動複製
+    document.getElementById('same_address').addEventListener('change', function () {
+      if (this.checked) {
+        document.getElementById('perm_city').value = document.getElementById('curr_city').value;
+        document.getElementById('perm_district').value = document.getElementById('curr_district').value;
+        document.getElementById('perm_street').value = document.getElementById('curr_street').value;
+        document.getElementById('perm_lane').value = document.getElementById('curr_lane').value;
+        document.getElementById('perm_number').value = document.getElementById('curr_number').value;
+      }
+    });
+
+    // 表單送出
+    document.getElementById("editForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const token = localStorage.getItem("token");
+      const phone = document.getElementById("phone").value.trim();
+      const emergencyPhone = document.getElementById("emergency_phone").value.trim();
+      const phoneRegex = /^09\d{8}$/;
+
+      // 驗證手機號碼格式
+      if (!phoneRegex.test(phone)) {
+        alert("手機號碼格式錯誤！請輸入 09 開頭的 10 碼數字");
+        return;
+      }
+      if (!phoneRegex.test(emergencyPhone)) {
+        alert("緊急聯絡人手機號碼格式錯誤！");
+        return;
+      }
+
+      // 驗證所有必填欄位
+      const requiredFields = [
+        "curr_city", "curr_district", "curr_street", "curr_lane", "curr_number",
+        "perm_city", "perm_district", "perm_street", "perm_lane", "perm_number",
+        "emergency_name", "emergency_relation"
+      ];
+      for (const id of requiredFields) {
+        if (document.getElementById(id).value.trim() === "") {
+          alert("請完整填寫所有必填欄位！");
+          return;
+        }
+      }
+
+      // 傳送到後端更新
+      fetch("http://localhost:8080/api/v1/patients/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          patient_phone: document.getElementById("phone").value.trim(),
+          new_allergy:   document.getElementById("new_allergy").value.trim(),
+          new_record:    document.getElementById("new_record").value.trim(),
+          curr_city:     document.getElementById("curr_city").value.trim(),
+          curr_district: document.getElementById("curr_district").value.trim(),
+          curr_street:   document.getElementById("curr_street").value.trim(),
+          curr_lane:     document.getElementById("curr_lane").value.trim(),
+          curr_number:   document.getElementById("curr_number").value.trim(),
+          perm_city:     document.getElementById("perm_city").value.trim(),
+          perm_district: document.getElementById("perm_district").value.trim(),
+          perm_street:   document.getElementById("perm_street").value.trim(),
+          perm_lane:     document.getElementById("perm_lane").value.trim(),
+          perm_number:   document.getElementById("perm_number").value.trim(),
+          emergency_name:     document.getElementById("emergency_name").value.trim(),
+          emergency_phone:    document.getElementById("emergency_phone").value.trim(),
+          emergency_relation: document.getElementById("emergency_relation").value.trim()
+        })
+      })
+      .then(res => res.json())
+      .then(r => {
+        if (!r.error) {
+          alert("更新成功！");
+        } else {
+          alert("更新失敗：" + r.message);
+        }
+      })
+      .catch(() => {
+        alert("無法連線至後端，請稍後再試");
+      });
+    });
+  </script>
 </body>
 </html>

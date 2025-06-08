@@ -151,7 +151,10 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ account, password })
+            body: JSON.stringify({
+                patient_id: account,    // 從「account」改為「patient_id」
+                password: password
+  })
         })
         .then(response => {
           if (!response.ok) {
@@ -159,6 +162,7 @@
           }
           return response.json();
         })
+        .then(res => res.json())
         .then(data => {
           if (data.success) {
             alert("登入成功！");

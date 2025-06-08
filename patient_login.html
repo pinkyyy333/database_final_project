@@ -112,7 +112,7 @@
   </header>
   <div class="login-container">
     <h2>病人登入</h2>
-    <form id="loginForm" method="POST" action="patient_login.php">
+    <form id="loginForm">
       <label for="account">使用者帳號</label>
       <input type="text" id="account" name="account" placeholder="請輸入身分證 / 居留證號" required>
 
@@ -146,29 +146,39 @@
           return;
         }
 
-        // 模擬帳密驗證
-        const validAccounts = [
-          { account: "A123456789", password: "TestPass123" },
-          { account: "123456789012", password: "AbcDefGhi1" }
-        ];
-
-        const isLoginSuccess = validAccounts.some(acc =>
-          acc.account === account && acc.password === password
-        );
-
-        if (isLoginSuccess) {
-          alert("登入成功！");
-          localStorage.setItem("isLoggedIn", "true");
-          localStorage.setItem("account", account);
-          localStorage.setItem("role", "patient");
-          window.location.href = "appointment.html";
-        } else {
-          const goToRegister = confirm("登入失敗，帳號或密碼錯誤。\n是否前往註冊頁面？");
-          if (goToRegister) {
-            window.location.href = "register.html";
+        fetch('http://localhost:8080/api/patient_login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ account, password })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('登入失敗，伺服器錯誤');
           }
-        }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            alert("登入成功！");
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("account", account);
+            localStorage.setItem("role", "patient");
+            window.location.href = "appointment.html";
+          } else {
+            const goToRegister = confirm("登入失敗，帳號或密碼錯誤。\n是否前往註冊頁面？");
+            if (goToRegister) {
+              window.location.href = "patient_register.html";
+            }
+          }
+        })
+        .catch(error => {
+          alert("網路錯誤或伺服器無回應，請稍後再試。");
+          console.error('fetch error:', error);
+        });
       });
+
     });
   </script>
 </body>

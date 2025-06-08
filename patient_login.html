@@ -151,7 +151,7 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ account, password })
+          body: JSON.stringify({ patient_id: account, password: password })
         })
         .then(response => {
           if (!response.ok) {
@@ -165,7 +165,7 @@
             localStorage.setItem("isLoggedIn", "true");
             localStorage.setItem("account", account);
             localStorage.setItem("role", "patient");
-            window.location.href = "appointment.html";
+            window.location.href = "appointment_news.html";
           } else {
             const goToRegister = confirm("登入失敗，帳號或密碼錯誤。\n是否前往註冊頁面？");
             if (goToRegister) {

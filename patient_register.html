@@ -340,6 +340,7 @@
         }
 
         // 組成要送給後端的資料
+        /*
         const formData = {
           name,
           idNumber,
@@ -371,7 +372,16 @@
           food_allergy_other: foodOtherText,
           medical_history: getCheckedValues("medical_history[]"),
           medical_history_other: historyOtherText
+        };*/
+        const formData = {
+          patient_id: idNumber,
+          patient_name: name,
+          patient_gender: "男",    // 硬填，或加入輸入欄位
+          patient_birth: dob,
+          patient_phone: phone,
+          password: password
         };
+
 
         // 用 fetch 送給後端
         fetch('http://localhost:8080/api/v1/patients/register', {
@@ -386,6 +396,7 @@
             return response.json();
           })
           .then(data => {
+            console.log(data);
             if (data.success) {
               alert("註冊成功！");
               window.location.href = "patient_login.html";

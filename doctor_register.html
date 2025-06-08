@@ -174,7 +174,7 @@
         phone: this.phone.value
       };
 
-      fetch("http://localhost:3000/api/doctor-register", {
+      fetch("http://localhost:8080/api/doctor-register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

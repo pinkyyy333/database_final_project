@@ -133,7 +133,7 @@
       const password = this.password.value;
 
       // 保留原 fetch API 與路由
-      fetch('http://localhost:3000/api/doctor-login', {
+      fetch('http://localhost:8080/api/doctor-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ doctorId, password })

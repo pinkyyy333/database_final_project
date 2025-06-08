@@ -8,6 +8,7 @@ import (
 	"clinic-backend/models"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // (原本的 CreateDoctor, GetAllDoctors, UpdateDoctor, DeleteDoctor 如前)
@@ -100,4 +101,25 @@ func DeleteDoctor(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Deleted"})
+}
+
+func LoginDoctor(c *gin.Context) {
+	var req struct {
+		DoctorID string `json:"doctor_id"`
+		Password string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": true, "message": "參數錯誤", "code": 400})
+		return
+	}
+	var doc models.Doctor
+	if err := db.DB.First(&doc, "doctor_id = ?", req.DoctorID).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": true, "message": "帳號或密碼錯誤", "code": 401})
+		return
+	}
+	if bcrypt.CompareHashAndPassword([]byte(doc.Password), []byte(req.Password)) != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": true, "message": "帳號或密碼錯誤", "code": 401})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }

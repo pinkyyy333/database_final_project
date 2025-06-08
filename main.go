@@ -5,13 +5,14 @@ import (
 	"clinic-backend/routes"
 	services "clinic-backend/service"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	r := gin.Default()
+	r.Use(cors.Default())
 	db.InitDB()
-
 
 	// 啟動背景任務
 	go services.StartReminderCron()
@@ -24,7 +25,5 @@ func main() {
 	routes.RegisterManagerRoutes(r)
 	routes.RegisterBonusRoutes(r)
 
-	r.Static("/static", "../front")
-	//r.Run()
-	r.Run(":8080")
+	r.Run()
 }

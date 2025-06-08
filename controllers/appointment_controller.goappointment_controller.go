@@ -12,11 +12,11 @@ import (
 
 // AppointmentRequest 包含服務類型
 type AppointmentRequest struct {
-    DepartmentID    int       `json:"department_id"`
-    DoctorID        string    `json:"doctor_id"`
-    PatientID       string    `json:"patient_id"`
-    AppointmentTime time.Time `json:"appointment_time"`
-    ServiceType     string    `json:"service_type"`
+	DepartmentID    uint      `json:"department_id"`
+	DoctorID        uint      `json:"doctor_id"`
+	PatientID       string    `json:"patient_id"`
+	AppointmentTime time.Time `json:"appointment_time"`
+	ServiceType     string    `json:"service_type"`
 }
 
 // CreateAppointment 新增預約（含非看診服務）

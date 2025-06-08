@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	//"clinic-backend/models"
+	"clinic-backend/models"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -32,7 +32,7 @@ func InitDB() {
 	if err != nil {
 		log.Fatalf("GORM 連線失敗: %v", err)
 	}
-	/*
+
 	if err := DB.AutoMigrate(
 		&models.Patient{},
 		&models.Doctor{},
@@ -42,5 +42,5 @@ func InitDB() {
 		&models.Manager{},
 	); err != nil {
 		log.Fatalf("AutoMigrate 失敗: %v", err)
-	}*/
+	}
 }

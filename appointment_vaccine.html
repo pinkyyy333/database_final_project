@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>疫苗接種預約</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      padding-top: 40px;
+      position: relative;
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px; text-decoration: none; color: #000; font-size: 18px;
+      padding: 5px 10px; border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 200px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar .menu-item {
+      display: block;
+      text-decoration: none;
+      background-color: transparent;
+      color: #26a69a;
+      padding: 12px;
+      border: 2px solid #26a69a;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background-color: #26a69a;
+      color: #fff;
+    }
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(255,255,255,0.7);
+      z-index: -1;
+    }
+    form {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    padding: 30px 32px;
+    border-radius: 0;
+    width: 400px;
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+    }
+    form h2 {
+      text-align: center;
+      color: #0273c7;
+      margin-bottom: 12px;
+    }
+    .note {
+      font-size: 0.95em;
+      color: #777;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 6px;
+      color: #235488;
+    }
+    input, select {
+      width: 100%;
+      padding: 9px 10px;
+      margin-bottom: 8px;
+      border: 1px solid #bbb;
+      border-radius: 7px;
+      font-size: 1em;
+      background: #f9f9f9;
+    }
+    button {
+      background: #38bdf8;
+      color: #fff;
+      padding: 12px;
+      border: none;
+      width: 100%;
+      border-radius: 7px;
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-top: 18px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0ea5e9; }
+    .quota-info {
+      font-size: 1em;
+      margin: 10px 0;
+      color: #156930;
+      font-weight: bold;
+      min-height: 23px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+    <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <div class="sidebar">
+    <a href="appointment_news.html" class="menu-item">最新消息</a>
+    <a href="appointment_booking.html" class="menu-item">我要預約</a>
+    <a href="appointment_schedule.html" class="menu-item">查看門診週班表</a>
+    <a href="appointment_vaccine.html" class="menu-item active">疫苗接種預約</a>
+    <a href="appointment_profile.html" class="menu-item">個人資料</a>
+    <a href="appointment_feedback.html" class="menu-item">我要評分</a>
+    <a href="logout.html" class="menu-item">登出</a>
+  </div>
+  <div class="overlay"></div>
+
+  <form onsubmit="return submitVaccineForm()">
+    <h2>疫苗接種預約表單</h2>
+    <p class="note">每位病人限選一日預約，每日限額20人，時段：每日08:00–09:00</p>
+
+    <label>姓名</label>
+    <input type="text" name="name" required />
+
+    <label>出生年月日</label>
+    <input type="date" name="birthdate" required />
+
+    <label>健保卡號</label>
+    <input type="text" name="healthcard" maxlength="10" required />
+
+    <label>身分證字號</label>
+    <input type="text" name="idnumber" maxlength="10" required />
+
+    <label>選擇接種日期</label>
+    <input type="date" name="vaccine_date" required min="" id="datePicker" onchange="updateQuota()" />
+
+    <div class="quota-info" id="quotaInfo">請選擇日期以顯示剩餘名額</div>
+
+    <label>疫苗種類</label>
+    <select name="vaccine_type" required>
+      <option value="covid">新冠疫苗</option>
+      <option value="flu">流感疫苗</option>
+      <option value="hepatitisB">B型肝炎疫苗</option>
+    </select>
+
+    <button type="submit">送出預約</button>
+  </form>
+
+  <script>
+    // 設定 min 為今天
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("datePicker").min = today;
+
+    // 假資料：模擬每個日期的預約人數（實際應從後端取得）
+    const appointments = {
+      "2025-06-07": 18,
+      "2025-06-08": 20,
+      "2025-06-09": 5,
+    };
+
+    function updateQuota() {
+      const date = document.getElementById("datePicker").value;
+      const count = appointments[date] || 0;
+      const remaining = 20 - count;
+      const quotaText = document.getElementById("quotaInfo");
+
+      if (remaining <= 0) {
+        quotaText.textContent = `❌ 已滿額（${count}/20）`;
+        quotaText.style.color = "red";
+      } else {
+        quotaText.textContent = `✅ 已預約 ${count} 人，剩餘 ${remaining} 名額`;
+        quotaText.style.color = "green";
+      }
+    }
+
+    function submitVaccineForm() {
+      const date = document.getElementById("datePicker").value;
+      const count = appointments[date] || 0;
+
+      if (count >= 20) {
+        alert("⚠️ 此日期預約已滿，請選擇其他日期。");
+        return false;
+      }
+      alert("預約成功！請於當日 08:00 準時報到。");
+      return false; // 阻止實際送出表單
+    }
+  </script>
+</body>
+</html>

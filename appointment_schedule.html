@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>預約掛號系統 - 我要預約</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+      background-color: #f7f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px; text-decoration: none; color: #000; font-size: 18px;
+      padding: 5px 10px; border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 200px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar .menu-item {
+      display: block;
+      text-decoration: none;
+      background-color: transparent;
+      color: #26a69a;
+      padding: 12px;
+      border: 2px solid #26a69a;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background-color: #26a69a;
+      color: #fff;
+    }
+    .main {
+      margin-left: 240px;
+      padding: 80px 20px 20px;
+    }
+    .form-container {
+      max-width: 600px;
+      background: #fff;
+      margin: 0 auto;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .form-container h2 { text-align:center; color:#003366; margin-bottom:30px; }
+    label {
+      display: block;
+      margin: 18px 0 6px;
+      font-weight: bold;
+      color: #444;
+    }
+    select, input[type="date"], input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f9f9f9;
+      font-size: 16px;
+      transition: border 0.3s;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 30px;
+      background: #3399ff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #007acc; }
+    table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #ccc;
+    table-layout: fixed;
+    margin-top: 18px;
+    overflow: hidden;
+  }
+  th, td {
+    border: 1px solid #b7d6ec;
+    padding: 10px 4px;
+    text-align: center;
+    word-wrap: break-word;
+    font-size: 15px;
+  }
+  th {
+    background-color: #60b0ff;
+    color: #00224d;
+    font-weight: bold;
+  }
+  .dept {
+    font-weight: bold;
+    background-color: #e8f4fd;
+  }
+  .doctor-name {
+    font-weight: bold;
+    color: #1250a5;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 15px;
+    display: inline-block;
+  }
+  .full-badge {
+    background: #e74c3c;
+    color: #fff;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 13px;
+    margin-left: 2px;
+    font-weight: 500;
+    display: inline-block;
+  }
+  .start-time {
+    color: #2775bd;
+    font-size: 13px;
+  }
+  .reg-info {
+    color: #d35400;
+    font-size: 13px;
+  }
+  tbody tr:nth-child(odd) {
+    background: #f5faff;
+  }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <div class="sidebar">
+    <a href="appointment_news.html" class="menu-item">最新消息</a>
+    <a href="appointment_booking.html" class="menu-item">我要預約</a>
+    <a href="appointment_schedule.html" class="menu-item active">查看門診週班表</a>
+    <a href="appointment_vaccine.html" class="menu-item">疫苗接種預約</a>
+    <a href="appointment_profile.html" class="menu-item">個人資料</a>
+    <a href="appointment_feedback.html" class="menu-item">我要評分</a>
+    <a href="logout.html" class="menu-item">登出</a>
+  </div>
+
+  <div class="main">
+  <h2 class="section-title" style="color: #003366; text-align: center;">門診週班表</h2>
+  <label for="monthSelect">選擇月份：</label>
+  <select id="monthSelect"></select>
+
+  <label for="weekSelect">選擇週次：</label>
+  <select id="weekSelect"></select>
+
+  <div id="scheduleTable"></div>
+</div>
+
+<script>
+  // 模擬後端提供的班表資料
+  const scheduleDataByMonth = {
+  "2025-06": {
+    "2025-06-01": {
+      dates: ["06/01", "06/02", "06/03", "06/04", "06/05", "06/06", "06/07"],
+      days: ["日", "一", "二", "三", "四", "五", "六"],
+      schedule: [
+        // 上午
+        {
+          time: "上午 09:00~12:00",
+          dept: "1外科",
+          doctors: [
+            {}, //日
+            { name: "陳建民", start: "08:30開診", full: true }, //一
+            { name: "陳建民", start: "08:30開診", reg: "已掛到37號" }, //二
+            { name: "林芳瑜", start: "08:30開診", full: true }, //三
+            { name: "林芳瑜", start: "08:30開診" }, //四
+            { name: "林芳瑜", start: "08:30開診", full: true }, //五
+            {} //六
+          ]
+        },
+        {
+          time: "上午 09:00~12:00",
+          dept: "2內科",
+          doctors: [
+            {}, 
+            { name: "張育誠", reg: "已掛到27號" },
+            { name: "周怡君", reg: "已掛到26號" },
+            { name: "張育誠", reg: "已掛到34號" },
+            { name: "張育誠", start: "08:30開診", reg: "已掛到37號" },
+            {},
+            {}
+          ]
+        },
+        {
+          time: "上午 09:00~12:00",
+          dept: "3耳鼻喉科",
+          doctors: [
+            {},
+            { name: "李冠廷", reg: "已掛到27號" },
+            { name: "吳宛蓉", reg: "已掛到26號" },
+            { name: "吳宛蓉", reg: "已掛到34號" },
+            { name: "李冠廷", start: "08:30開診", reg: "已掛到37號" },
+            {},
+            {}
+          ]
+        },
+        // 午診
+        {
+          time: "午診 14:00~17:00",
+          dept: "1外科",
+          doctors: [
+            {}, 
+            { name: "林芳瑜", start: "08:30開診", full: true },
+            { name: "林芳瑜", start: "08:30開診", full: true },
+            {},
+            {},
+            {},
+            { name: "林芳瑜", start: "08:30開診" }
+          ]
+        },
+        {
+          time: "午診 14:00~17:00",
+          dept: "2內科",
+          doctors: [
+            {}, 
+            { name: "劉璟鋒", reg: "已掛到27號" },
+            { name: "沈至軒", reg: "已掛到26號" },
+            { name: "沈至軒", reg: "已掛到34號" },
+            { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
+            {},
+            {}
+          ]
+        },
+        {
+          time: "午診 14:00~17:00",
+          dept: "3耳鼻喉科",
+          doctors: [
+            {}, 
+            { name: "劉璟鋒", reg: "已掛到27號" },
+            { name: "沈至軒", reg: "已掛到26號" },
+            { name: "沈至軒", reg: "已掛到34號" },
+            { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
+            {},
+            {}
+          ]
+        },
+        // 晚診
+        {
+          time: "晚診 19:00~22:00",
+          dept: "1外科",
+          doctors: [
+            {},
+            { name: "張世倫", start: "08:30開診", full: true },
+            { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
+            { name: "張世倫", start: "08:30開診", full: true },
+            { name: "張世倫", start: "08:30開診" },
+            { name: "張世倫", start: "08:30開診", full: true },
+            {}
+          ]
+        },
+        {
+          time: "晚診 19:00~22:00",
+          dept: "2內科",
+          doctors: [
+            {}, 
+            { name: "劉璟鋒", reg: "已掛到27號" },
+            { name: "沈至軒", reg: "已掛到26號" },
+            { name: "沈至軒", reg: "已掛到34號" },
+            { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
+            {},
+            {}
+          ]
+        },
+        {
+          time: "晚診 19:00~22:00",
+          dept: "3耳鼻喉科",
+          doctors: [
+            {}, 
+            { name: "劉璟鋒", reg: "已掛到27號" },
+            { name: "沈至軒", reg: "已掛到26號" },
+            { name: "沈至軒", reg: "已掛到34號" },
+            { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    "2025-06-08": {
+      dates: ["06/08", "06/09", "06/10", "06/11", "06/12", "06/13", "06/14"],
+      days: ["日", "一", "二", "三", "四", "五", "六"],
+      schedule: [
+        // 上午
+        {
+          time: "上午 09:00~12:00",
+          dept: "1外科",
+          doctors: [
+            { name: "陳妍戎", reg: "已掛到26號" },
+            { name: "陳建民", start: "08:30開診" },
+            { name: "陳建民", start: "08:30開診", reg: "已掛到35號" },
+            { name: "林芳瑜", start: "08:30開診", full: true },
+            { name: "林芳瑜", start: "08:30開診" },
+            {},
+            {}
+          ]
+        },
+        {
+          time: "上午 09:00~12:00",
+          dept: "2內科",
+          doctors: [
+            {},
+            { name: "張育誠", reg: "已掛到27號" },
+            { name: "周怡君", reg: "已掛到30號" },
+            { name: "張育誠", reg: "已掛到32號" },
+            {},
+            {},
+            {}
+          ]
+        },
+        {
+          time: "上午 09:00~12:00",
+          dept: "3耳鼻喉科",
+          doctors: [
+            {},
+            { name: "李冠廷", reg: "已掛到20號" },
+            { name: "吳宛蓉", reg: "已掛到22號" },
+            { name: "吳宛蓉", reg: "已掛到25號" },
+            {},
+            {},
+            {}
+          ]
+        },
+        // 午診
+        {
+          time: "午診 14:00~17:00",
+          dept: "1外科",
+          doctors: [
+            {},
+            {},
+            { name: "林芳瑜", start: "08:30開診" },
+            {},
+            {},
+            { name: "林芳瑜", start: "08:30開診" },
+            {}
+          ]
+        },
+        {
+          time: "午診 14:00~17:00",
+          dept: "2內科",
+          doctors: [
+            {},
+            { name: "劉璟鋒", reg: "已掛到15號" },
+            {},
+            {},
+            {},
+            {},
+            {}
+          ]
+        },
+        {
+          time: "午診 14:00~17:00",
+          dept: "3耳鼻喉科",
+          doctors: [
+            {},
+            { name: "劉璟鋒", reg: "已掛到12號" },
+            { name: "沈至軒", reg: "已掛到13號" },
+            {},
+            {},
+            {},
+            {}
+          ]
+        },
+        // 晚診
+        {
+          time: "晚診 19:00~22:00",
+          dept: "1外科",
+          doctors: [
+            {},
+            { name: "張世倫", start: "08:30開診" },
+            {},
+            { name: "張世倫", start: "08:30開診", full: true },
+            { name: "張世倫", start: "08:30開診" },
+            {},
+            {}
+          ]
+        },
+        {
+          time: "晚診 19:00~22:00",
+          dept: "2內科",
+          doctors: [
+            {},
+            {},
+            {},
+            { name: "沈至軒", reg: "已掛到34號" },
+            {},
+            {},
+            {}
+          ]
+        },
+        {
+          time: "晚診 19:00~22:00",
+          dept: "3耳鼻喉科",
+          doctors: [
+            {},
+            {},
+            { name: "劉璟鋒", reg: "已掛到27號" },
+            {},
+            {},
+            {},
+            {}
+          ]
+        }
+      ]
+    }
+  }
+};
+
+
+  const monthKeys = Object.keys(scheduleDataByMonth);
+  const monthSelect = document.getElementById("monthSelect");
+  const weekSelect = document.getElementById("weekSelect");
+
+  function loadMonthOptions() {
+    monthSelect.innerHTML = "";
+    monthKeys.forEach(month => {
+      const text = month.replace("-", "年") + "月";
+      monthSelect.innerHTML += `<option value="${month}">${text}</option>`;
+    });
+  }
+
+  function loadWeekOptions(month) {
+    weekSelect.innerHTML = "";
+    const weeks = scheduleDataByMonth[month];
+    for (const weekKey in weeks) {
+      const dates = weeks[weekKey].dates;
+      const text = `${weekKey.replace(/-/g, "/")} - ${dates[dates.length - 1]}`;
+      weekSelect.innerHTML += `<option value="${weekKey}">${text}</option>`;
+    }
+  }
+
+  function renderTable(weekKey) {
+  const month = monthSelect.value;
+  const weekData = scheduleDataByMonth[month][weekKey];
+  if (!weekData) {
+    document.getElementById("scheduleTable").innerHTML = "<p>無排班資料</p>";
+    return;
+  }
+  const { dates, days, schedule } = weekData;
+  const uniqueTimes = [];
+  schedule.forEach(slot => { if (!uniqueTimes.includes(slot.time)) uniqueTimes.push(slot.time); });
+  const groupedByTime = {};
+  uniqueTimes.forEach(time => { groupedByTime[time] = schedule.filter(s => s.time === time); });
+  let html = `<table><thead><tr>
+    <th>班別</th><th>科別及名稱</th>`;
+  for (let i = 0; i < 7; i++) html += `<th>${dates[i]}<br>星期${days[i]}</th>`;
+  html += `</tr></thead><tbody>`;
+  for (const time of uniqueTimes) {
+    const depts = groupedByTime[time];
+    const rowspan = depts.length;
+    depts.forEach((slot, idx) => {
+      html += `<tr>`;
+      if (idx === 0) html += `<td rowspan="${rowspan}">${time}</td>`;
+      html += `<td class="dept">${slot.dept}</td>`;
+      for (let i = 0; i < 7; i++) {
+        const doc = slot.doctors[i] || {};
+        if (doc.name) {
+          html += `<td>
+            <span class="doctor-name">${doc.name}${doc.full ? `<span class='full-badge'>額滿</span>` : ""}</span>`;
+          if (doc.start) html += `<br><span class="start-time">${doc.start}</span>`;
+          if (doc.reg) html += `<br><span class="reg-info">${doc.reg}</span>`;
+          html += `</td>`;
+        } else {
+          html += `<td></td>`;
+        }
+      }
+      html += `</tr>`;
+    });
+  }
+  html += `</tbody></table>`;
+  document.getElementById("scheduleTable").innerHTML = html;
+}
+
+
+  // 初始化
+  loadMonthOptions();
+  monthSelect.value = monthKeys[0];
+  loadWeekOptions(monthSelect.value);
+  monthSelect.addEventListener("change", function () {
+    loadWeekOptions(this.value);
+    const firstWeek = weekSelect.options[0]?.value;
+    if (firstWeek) {
+      weekSelect.value = firstWeek;
+      renderTable(firstWeek);
+    } else {
+      document.getElementById("scheduleTable").innerHTML = "<p>無排班資料</p>";
+    }
+  });
+  weekSelect.addEventListener("change", function () { renderTable(this.value); });
+  renderTable(weekSelect.value = weekSelect.options[0]?.value);
+</script>
+
+</body>
+</html>

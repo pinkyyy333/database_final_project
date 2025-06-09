@@ -2,8 +2,10 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>醫生排班設定</title>
   <style>
+    /* --- 保留既有 CSS，未作修改 --- */
     body {
       background-size: cover;
       background-position: center;
@@ -43,7 +45,6 @@
       gap: 15px;
       background-color: #fff;
       height: calc(100vh - 60px);
-      /* box-shadow 移除，改為無陰影 */
       overflow-y: auto;
     }
     .sidebar .menu-item {
@@ -71,11 +72,9 @@
       border-radius: 15px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
     }
-
     h1, label, select, button {
       color: #003366;
     }
-
     table {
       border-collapse: collapse;
       width: 100%;
@@ -83,29 +82,24 @@
       border-radius: 10px;
       overflow: hidden;
     }
-
     td, th {
       border: 1px solid #ccc;
       text-align: center;
       padding: 8px;
       vertical-align: top;
     }
-
     .date-cell {
       height: 100px;
       background-color: #f0f8ff;
     }
-
     .checkbox-group {
       display: flex;
       flex-direction: column;
       font-size: 0.9em;
     }
-
     select {
       margin: 10px;
     }
-
     button {
       background-color: #3399ff;
       color: white;
@@ -115,7 +109,6 @@
       cursor: pointer;
       margin-top: 15px;
     }
-
     button:hover {
       background-color: #2277cc;
     }
@@ -160,105 +153,114 @@
   </div>
 
   <script>
-    const calendarContainer = document.getElementById("calendarContainer");
+    const container = document.getElementById("calendarContainer");
     const yearSelect = document.getElementById("yearSelect");
     const monthSelect = document.getElementById("monthSelect");
-
     const currentYear = new Date().getFullYear();
-    for (let y = currentYear; y <= currentYear + 1; y++) {
-      const opt = document.createElement("option");
-      opt.value = y;
-      opt.textContent = y;
-      yearSelect.appendChild(opt);
+    const token = localStorage.getItem("token");
+    const doctorId = localStorage.getItem("doctor_id");
+    if (!token || !doctorId) {
+      alert("請先登入");
+      window.location.href = "portal.html";
     }
 
-    for (let m = 0; m < 12; m++) {
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m + 1;
-      monthSelect.appendChild(opt);
+    // 建立年份、月份下拉
+    for (let y = currentYear; y <= currentYear+1; y++) {
+      const o = new Option(y, y);
+      yearSelect.add(o);
     }
-
+    for (let m=1; m<=12; m++){
+      const o = new Option(m, m-1);
+      monthSelect.add(o);
+    }
     yearSelect.value = currentYear;
     monthSelect.value = new Date().getMonth();
 
-    yearSelect.addEventListener("change", renderCalendar);
-    monthSelect.addEventListener("change", renderCalendar);
+    yearSelect.onchange = monthSelect.onchange = renderCalendar;
 
-    function renderCalendar() {
-      const year = parseInt(yearSelect.value);
-      const month = parseInt(monthSelect.value);
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+    // 取回既有排班：GET /api/v1/doctors/:id/schedule?year=…&month=… 
+    async function loadSchedule(year, month) {
+      const res = await fetch(`http://localhost:8080/api/v1/doctors/${doctorId}/schedule?year=${year}&month=${month+1}`, {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const j = await res.json();
+      if (j.error) throw new Error(j.message);
+      return j.schedule || {};  // { "2025-06-05": ["morning","afternoon"], … }
+    }
 
-      let html = "<table><tr>";
-      const days = ["日", "一", "二", "三", "四", "五", "六"];
-      for (let d of days) html += `<th>${d}</th>`;
-      html += "</tr><tr>";
+    async function renderCalendar(){
+      const y = +yearSelect.value, m = +monthSelect.value;
+      const first = new Date(y,m,1).getDay();
+      const days = new Date(y,m+1,0).getDate();
+      const sched = await loadSchedule(y,m);
 
-      for (let i = 0; i < firstDay; i++) html += "<td></td>";
-
-      for (let date = 1; date <= daysInMonth; date++) {
-        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-        html += `<td class="date-cell"><strong>${date}</strong>
-        <div class="checkbox-group">
-          <label><input type="checkbox" name="${fullDate}" value="morning" /> 早診</label>
-          <label><input type="checkbox" name="${fullDate}" value="afternoon" /> 午診</label>
-          <label><input type="checkbox" name="${fullDate}" value="evening" /> 晚診</label>
-        </div>
-        </td>`;
-        if ((date + firstDay) % 7 === 0) html += "</tr><tr>";
+      let html = "<table><tr>" +
+        ["日","一","二","三","四","五","六"].map(d=>`<th>${d}</th>`).join("") +
+        "</tr><tr>";
+      for(let i=0;i<first;i++) html+="<td></td>";
+      for(let d=1; d<=days; d++){
+        const date = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        html += `<td class="date-cell"><strong>${d}</strong><div class="checkbox-group">` +
+          ["morning","afternoon","evening"].map(slot=>{
+            const checked = sched[date]?.includes(slot)?"checked":"";
+            return `<label><input type="checkbox" name="${date}" value="${slot}" ${checked}/> ${slot}</label>`;
+          }).join("") +
+          `</div></td>`;
+        if((d+first)%7===0) html+="</tr><tr>";
       }
-
-      html += "</tr></table>";
-      calendarContainer.innerHTML = html;
+      html+="</tr></table>";
+      container.innerHTML = html;
     }
 
     renderCalendar();
 
-    function getWeekKey(dateStr) {
-      const date = new Date(dateStr);
-      const janFirst = new Date(date.getFullYear(), 0, 1);
-      const days = Math.floor((date - janFirst) / (1000 * 60 * 60 * 24));
-      const weekNum = Math.floor((days + janFirst.getDay()) / 7);
-      return `${date.getFullYear()}-W${weekNum}`;
+    // 計算週次
+    function weekKey(dateStr){
+      const dt=new Date(dateStr);
+      const start=new Date(dt.getFullYear(),0,1);
+      const diff=Math.floor((dt-start)/(86400000));
+      const wk=Math.floor((diff+start.getDay())/7)+1;
+      return `${dt.getFullYear()}-W${wk}`;
     }
 
-    function submitSchedule() {
-      const checkboxes = document.querySelectorAll("input[type='checkbox']:checked");
+    // 提交：POST /api/v1/doctors/:id/schedule  
+    async function submitSchedule(){
+      const boxes = document.querySelectorAll("input[type=checkbox]");
       const schedule = {};
-      const weeklyDays = {};
-      const weeklyHours = {};
-
-      checkboxes.forEach(cb => {
-        const dateStr = cb.name;
-        const timeSlot = cb.value;
-        const weekKey = getWeekKey(dateStr);
-
-        if (!schedule[dateStr]) schedule[dateStr] = [];
-        schedule[dateStr].push(timeSlot);
-
-        if (!weeklyDays[weekKey]) weeklyDays[weekKey] = new Set();
-        weeklyDays[weekKey].add(dateStr);
-
-        if (!weeklyHours[weekKey]) weeklyHours[weekKey] = 0;
-        weeklyHours[weekKey] += 3;
-      });
-
-      for (const week in weeklyDays) {
-        if (weeklyDays[week].size > 6) {
-          alert(`第 ${week} 排班天數為 ${weeklyDays[week].size} 天，超過限制（最多 6 天）。請調整。`);
-          return;
-        }
-        if (weeklyHours[week] > 48) {
-          alert(`第 ${week} 工時為 ${weeklyHours[week]} 小時，超過限制（最多 48 小時）。請調整。`);
-          return;
+      const byWeek = {};
+      for(const cb of boxes){
+        if(!schedule[cb.name]) schedule[cb.name]=[];
+        if(cb.checked) schedule[cb.name].push(cb.value);
+        const w=weekKey(cb.name);
+        byWeek[w]=byWeek[w]||{days:new Set(),hours:0};
+        if(cb.checked){
+          byWeek[w].days.add(cb.name);
+          byWeek[w].hours+=3;
         }
       }
-
-      localStorage.setItem("doctorSchedule", JSON.stringify(schedule));
-      alert("排班成功！");
-      window.location.href = "view_schedule.html";
+      for(const w in byWeek){
+        if(byWeek[w].days.size>6){
+          return alert(`第 ${w} 週排班 ${byWeek[w].days.size} 天，超過 6 天`);
+        }
+        if(byWeek[w].hours>48){
+          return alert(`第 ${w} 週工時 ${byWeek[w].hours} 小時，超過 48 小時`);
+        }
+      }
+      const res = await fetch(`http://localhost:8080/api/v1/doctors/${doctorId}/schedule`, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer "+token
+        },
+        body:JSON.stringify({ schedule })
+      });
+      const j = await res.json();
+      if(!j.error){
+        alert("排班設定成功");
+        window.location.href="doctor_viewschedule.html";
+      } else {
+        alert("錯誤：" + j.message);
+      }
     }
   </script>
 </body>

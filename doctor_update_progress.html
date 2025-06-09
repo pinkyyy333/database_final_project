@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>更新看診進度</title>
   <style>
+    /* 原有樣式不變 */
     body {
       font-family: sans-serif;
       padding: 30px;
@@ -44,7 +45,6 @@
       gap: 15px;
       background-color: #fff;
       height: calc(100vh - 60px);
-      /* box-shadow 移除，改為無陰影 */
       overflow-y: auto;
     }
     .sidebar .menu-item {
@@ -68,7 +68,6 @@
       color: #333;
       margin-bottom: 20px;
     }
-
     select, button {
       font-size: 16px;
       padding: 10px 20px;
@@ -78,12 +77,10 @@
       background-color: #ffffffdd;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-
     button:hover {
       background-color: #f0f0f0;
       cursor: pointer;
     }
-
     .number {
       font-size: 2em;
       margin-top: 30px;
@@ -93,20 +90,19 @@
       display: inline-block;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
     p {
       font-size: 1.1em;
       color: #555;
     }
     .content {
       background: linear-gradient(135deg, #d1e8f2, #e8e9f9);
-      max-width: 800px;      /* 加大寬度 */
-      margin: 100px auto 40px 260px; /* 上方空間留 navbar，左邊留 sidebar */
-      padding: 40px 50px;    /* 加大內距 */
+      max-width: 800px;
+      margin: 100px auto 40px 260px;
+      padding: 40px 50px;
       border-radius: 20px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.1);
       text-align: center;
-      font-size: 1.2rem;     /* 整體字體放大 */
+      font-size: 1.2rem;
     }
   </style>
 </head>
@@ -134,6 +130,7 @@
     <a href="doctor_selectpatient.html" class="menu-item">病患病歷及回饋查詢</a>
     <a href="logout.html" class="menu-item">登出</a>
   </aside>
+
   <main class="content">
     <h1>即時看診進度更新</h1>
     <p>今天日期：<span id="today"></span></p>
@@ -144,36 +141,70 @@
         <option value="evening">晚診</option>
       </select>
     </p>
-    <button onclick="nextPatient()">下一位病人</button>
-    <div class="number">目前號碼：第 <span id="current">1</span> 號</div>
+    <button id="nextBtn">下一位病人</button>
+    <div class="number" id="currentPatient">載入中…</div>
   </main>
 
   <script>
-    const doctorId = localStorage.getItem("doctorId") || "10001";
-    const today = new Date().toISOString().slice(0, 10);
-    document.getElementById("today").textContent = today;
-
-    const sessionSelect = document.getElementById("session");
-    const numberSpan = document.getElementById("current");
-
-    function getKey() {
-      return progress_${doctorId}_${today}_${sessionSelect.value};
+    const token = localStorage.getItem('token');
+    const doctorId = localStorage.getItem('doctor_id');
+    if (!token || !doctorId) {
+      alert('請先登入');
+      location.href = 'portal.html';
     }
 
-    function loadProgress() {
-      const current = parseInt(localStorage.getItem(getKey()) || "1", 10);
-      numberSpan.textContent = current;
+    document.getElementById('today').textContent =
+      new Date().toISOString().slice(0,10);
+
+    let queue = [];
+    let idx = 0;
+
+    async function loadQueue() {
+      const res = await fetch(`http://localhost:8080/api/v1/queue/${doctorId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const j = await res.json();
+      if (j.error) throw new Error(j.message);
+      queue = j.queue;  // array of appointments
+      idx = 0;
+      renderCurrent();
     }
 
-    function nextPatient() {
-      let current = parseInt(localStorage.getItem(getKey()) || "1", 10);
-      if (current < 45) current++;
-      localStorage.setItem(getKey(), current);
-      numberSpan.textContent = current;
+    function renderCurrent() {
+      const el = document.getElementById('currentPatient');
+      if (queue.length === 0) {
+        el.textContent = '目前無等待病人';
+      } else {
+        const appt = queue[idx];
+        // 顯示病患身分證或序號
+        el.textContent = `第 ${idx+1} 號：${appt.patient_id}`;
+      }
     }
 
-    sessionSelect.addEventListener("change", loadProgress);
-    loadProgress();
+    async function nextPatient() {
+      if (queue.length === 0) return;
+      const appt = queue[idx];
+      // 標記完成
+      await fetch(`http://localhost:8080/api/v1/appointments/${appt.appointment_id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ status: 'completed' })
+      });
+      // 重新載入隊列
+      await loadQueue();
+    }
+
+    document.getElementById('nextBtn').onclick = nextPatient;
+    document.getElementById('session').onchange = loadQueue;
+
+    // 初次載入
+    loadQueue().catch(err => {
+      console.error(err);
+      alert('讀取隊列失敗：' + err.message);
+    });
   </script>
 </body>
 </html>

@@ -54,64 +54,67 @@
   </div>
 
   <script>
-    const departments = {
-      "院長": [{
-        name: '陳建民',
-        title: "院長、外科主治醫生",
-        education: "國立台灣大學醫學系",
-        experience: '台大醫院、榮總住院醫師',
-        specialty: "大腸直腸癌手術、甲狀腺與乳房腫瘤切除、腹腔鏡微創手術",
-        image: "醫生1.jpg"
-      }],
-      "外科": {
-        description: "外科主要以手術方式治療消化道、甲狀腺、乳房等器官的疾病，強調微創與術後照護。本院外科團隊具備微創手術經驗，強調術後疼痛控制與快速康復，並配有術前評估與術後追蹤管理，提供病患安全、精準與個別化的外科治療服務。",
-        doctors: [
-          { name: '林芳瑜', title: "主治醫師", education: '國立陽明交通大學醫學系', experience: '亞東醫院主治醫師', specialty: '肛門痔瘡手術、體表腫瘤/囊腫切除', image: "醫生2.jpg" }
-        ]
-      },
-      "內科": {
-        description: "內科專注於以藥物與非手術方式治療慢性病、感染與器官系統疾病，是病患的重要初診科別。我們的內科團隊致力於以循證醫學（EBM）為基礎，配合臨床指引與多專科會診模式，為病患提供連續性、個別化與預防導向的全人照護。",
-        doctors: [
-          { name: '張育誠', title: "主治醫師", education: '高雄醫學大學醫學系', experience: '馬偕醫院', specialty: "糖尿病、慢性腎臟病", image: "醫生3.jpg" },
-          { name: '周怡君', title: "主治醫師", education: '中山醫學大學醫學系', experience: '彰基、澄清醫院', specialty: '腸胃疾病、呼吸道疾病', image: "醫生4.jpg" }
-        ]
-      },
-      "耳鼻喉科": {
-        description: "耳鼻喉科治療耳、鼻、喉部疾病，涵蓋鼻炎、聲音沙啞、聽力障礙與打鼾等多項專業項目。耳鼻喉科設有專業檢查儀器（內視鏡、聲門動態分析、聽力檢查室等），並與睡眠中心與復健科合作，提供打鼾治療、語音治療等多元整合服務。",
-        doctors: [
-          { name: '李冠廷', title: "主治醫師", education: '中國醫藥大學醫學系', experience: '中醫附醫', specialty: '過敏性鼻炎、耳鳴、眩暈與中耳炎診治', image: "醫生5.jpg" },
-          { name: '吳宛蓉', title: "主治醫師", education: '馬偕醫學院醫學系', experience: '馬偕耳鼻喉科診所', specialty: '鼻過敏與長期鼻塞治療、聽力檢查與耳道異物處理', image: "醫生6.jpg" }
-        ]
-      }
-    };
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token') || '';
 
-    const container = document.getElementById("department-container");
-    for (const dept in departments) {
-      const section = document.createElement("section"); section.className = "department";
-      const header = document.createElement("h2"); header.textContent = dept; section.appendChild(header);
-      if (departments[dept].description) {
-        const desc = document.createElement("p"); desc.className = "department-description";
-        desc.textContent = departments[dept].description; section.appendChild(desc);
-      }
-      const list = document.createElement("div"); list.className = "doctor-list";
-      const doctors = Array.isArray(departments[dept]) ? departments[dept] : departments[dept].doctors;
-      doctors.forEach(doc => {
-        const card = document.createElement("div"); card.className = "card";
-        card.innerHTML = `
-          <img src="${doc.image}" alt="${doc.name}">
-          <div class="card-content">
-            <h3>${doc.name}</h3>
-            <p><strong>${doc.title}</strong></p>
-            <p><strong>學歷：</strong>${doc.education}</p>
-            <p><strong>經歷：</strong>${doc.experience}</p>
-            <p><strong>專長：</strong>${doc.specialty}</p>
-          </div>
-        `;
-        list.appendChild(card);
+      // 先抓所有科別
+      fetch('http://localhost:8080/api/v1/departments', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(res => res.json())
+      .then(deptData => {
+        if (deptData.error) throw new Error(deptData.message);
+        const container = document.getElementById('department-container');
+
+        // 對每個科別抓醫師
+        deptData.departments.forEach(dept => {
+          // 建立科別區塊
+          const section = document.createElement('section');
+          section.className = 'department';
+          section.innerHTML = `
+            <h2>${dept.dept_name}</h2>
+            <p class="department-description">${dept.dept_description}</p>
+            <div class="doctor-list" id="dept-${dept.Dept_ID}-doctors"></div>
+          `;
+          container.appendChild(section);
+
+          // 抓這個科別的醫師
+          fetch(`http://localhost:8080/api/v1/departments/${dept.Dept_ID}/doctors`, {
+            headers: {
+              'Authorization': 'Bearer ' + token
+            }
+          })
+          .then(r => r.json())
+          .then(docData => {
+            if (docData.error) throw new Error(docData.message);
+            const listEl = document.getElementById(`dept-${dept.Dept_ID}-doctors`);
+            docData.doctors.forEach(doc => {
+              const card = document.createElement('div');
+              card.className = 'card';
+              card.innerHTML = `
+                <img src="醫生預設.jpg" alt="${doc.doctor_name}">
+                <div class="card-content">
+                  <h3>${doc.doctor_name}</h3>
+                  <p>${doc.doctor_info}</p>
+                </div>
+              `;
+              listEl.appendChild(card);
+            });
+          })
+          .catch(err => {
+            console.error('取得醫師失敗', err);
+            const listEl = document.getElementById(`dept-${dept.Dept_ID}-doctors`);
+            listEl.innerHTML = '<p>無法載入醫師清單</p>';
+          });
+        });
+      })
+      .catch(err => {
+        console.error('取得科別失敗', err);
+        document.getElementById('department-container').innerHTML = '<p>無法載入科別資料</p>';
       });
-      section.appendChild(list);
-      container.appendChild(section);
-    }
+    });
   </script>
 </body>
 </html>

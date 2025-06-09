@@ -43,7 +43,6 @@
       gap: 15px;
       background-color: #fff;
       height: calc(100vh - 60px);
-      /* box-shadow 移除，改為無陰影 */
       overflow-y: auto;
     }
     .sidebar .menu-item {
@@ -120,21 +119,57 @@
 
   <main class="main">
     <h2 class="section-title">最新消息</h2>
-    <div class="news-item">
-      <div class="news-title">新增皮膚科門診醫師公告</div>
-      <div class="news-date">2024-06-05</div>
-      <p>即日起，本院皮膚科新增王大明醫師，每週一、三上午時段門診。</p>
-    </div>
-    <div class="news-item">
-      <div class="news-title">疫苗接種最新政策</div>
-      <div class="news-date">2024-05-30</div>
-      <p>政府最新疫苗接種政策已公布，65歲以上長者可免費接種流感疫苗，即日起可透過系統預約。</p>
-    </div>
-    <div class="news-item">
-      <div class="news-title">端午節休診公告</div>
-      <div class="news-date">2024-05-14</div>
-      <p>因端午節連續假期，5月30日至6月1日本院各科休診，敬請見諒。</p>
+    <div id="newsContainer">
+      <!-- 由 JavaScript 動態插入 news-item -->
     </div>
   </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('請先登入後再查看最新消息');
+        window.location.href = 'doctor_login.html';
+        return;
+      }
+
+      const container = document.getElementById('newsContainer');
+      // 清空預設樣板（若有）
+      container.innerHTML = '';
+
+      // 從後端取得最新消息
+      fetch('http://localhost:8080/api/v1/news', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (json.error) {
+          throw new Error(json.message);
+        }
+        const items = json.news || [];
+        if (items.length === 0) {
+          container.innerHTML = '<p>目前沒有最新消息。</p>';
+        } else {
+          items.forEach(n => {
+            const div = document.createElement('div');
+            div.className = 'news-item';
+            div.innerHTML = `
+              <div class="news-title">${n.title}</div>
+              <div class="news-date">${new Date(n.date).toISOString().slice(0,10)}</div>
+              <p>${n.content}</p>
+            `;
+            container.appendChild(div);
+          });
+        }
+      })
+      .catch(err => {
+        console.error('載入最新消息失敗', err);
+        container.innerHTML = '<p>載入最新消息時發生錯誤，請稍後再試。</p>';
+      });
+    });
+  </script>
 </body>
 </html>

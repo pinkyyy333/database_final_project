@@ -133,7 +133,7 @@
       const password = this.password.value;
 
       if (!/^\d{5}$/.test(doctorId)) {
-        alert("醫師代號格式錯誤，需5位數字");
+        alert("醫師代號格式錯誤，需 5 位數字");
         return;
       }
       if (!password) {
@@ -144,29 +144,32 @@
       fetch('http://localhost:8080/api/v1/doctors/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ doctorId, password })
+        body: JSON.stringify({
+          doctor_id: doctorId,
+          password: password
+        })
       })
-        .then(res => {
-          if (!res.ok) throw new Error("伺服器錯誤");
-          return res.json();
-        })
-        .then(data => {
-          if (data.success) {
-            alert("登入成功！");
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("role", "doctor");
-            localStorage.setItem("doctorId", doctorId);
-            window.location.href = "doctor_home.html";
-          } else {
-            if (confirm("帳號或密碼錯誤，是否前往註冊？")) {
-              window.location.href = "doctor_register.html";
-            }
+      .then(res => {
+        if (!res.ok) throw new Error("伺服器錯誤");
+        return res.json();
+      })
+      .then(data => {
+        // 後端應回傳 { error: false, token: "JWT…" }
+        if (!data.error && data.token) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("doctor_id", doctorId);
+          alert("登入成功！");
+          window.location.href = "doctor_home.html";
+        } else {
+          if (confirm("帳號或密碼錯誤，是否前往註冊？")) {
+            window.location.href = "doctor_register.html";
           }
-        })
-        .catch(err => {
-          alert("系統錯誤，請稍後再試！");
-          console.error(err);
-        });
+        }
+      })
+      .catch(err => {
+        alert("系統錯誤，請稍後再試！");
+        console.error(err);
+      });
     });
   </script>
 </body>

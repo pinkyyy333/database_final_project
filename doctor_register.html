@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>醫師註冊頁面</title>
   <style>
+    /* 完全沿用你原本的 CSS，不做任何修改 */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #eef3f7;
@@ -127,9 +128,9 @@
 
       <label>部門：</label>
       <select name="departmentId" required>
-        <option value="D001">內科</option>
-        <option value="D002">外科</option>
-        <option value="D003">耳鼻喉科</option>
+        <option value="1">內科</option>
+        <option value="2">外科</option>
+        <option value="3">耳鼻喉科</option>
       </select>
 
       <label>姓名（2~4字）：</label>
@@ -161,55 +162,37 @@
   <script>
     document.getElementById("registerForm").addEventListener("submit", function (e) {
       e.preventDefault();
+      const f = e.target;
 
-      const formData = {
-        doctorId: this.doctorId.value.trim(),
-        password: this.password.value,
-        departmentId: this.departmentId.value,
-        name: this.name.value,
-        gender: this.gender.value,
-        hireDate: this.hireDate.value,
-        education: this.education.value,
-        experience: this.experience.value,
-        phone: this.phone.value
+      // 組成後端需要的 JSON 欄位
+      const payload = {
+        doctor_id:   f.doctorId.value.trim(),
+        password:    f.password.value,
+        dept_id:     parseInt(f.departmentId.value),
+        doctor_name: f.name.value.trim(),
+        // 把性別和雇用日期放到 info 裡，或依需求自行調整
+        doctor_info: `性別:${f.gender.value}, 雇用:${f.hireDate.value}`,
       };
 
-      // 基本驗證
-      if (!/^\d{5}$/.test(formData.doctorId)) {
-        alert("醫師代號必須為5位數字");
-        return;
-      }
-      if (!formData.password) {
-        alert("密碼不可空白");
-        return;
-      }
-
+      // 發 POST 到後端 CreateDoctor API :contentReference[oaicite:0]{index=0}
       fetch("http://localhost:8080/api/v1/doctors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          doctor_id: formData.doctorId,
-          password: formData.password,
-          dept_id: formData.departmentId,
-          doctor_name: formData.name,
-          doctor_info: `性別:${formData.gender}, 雇用:${formData.hireDate}`
-        })
+        body: JSON.stringify(payload)
       })
-      .then(res => {
-        if (!res.ok) throw new Error("伺服器錯誤");
-        return res.json();
-      })
-      .then(data => {
-        if (data.success) {
-          alert("註冊成功！請重新登入");
+      .then(async res => {
+        if (res.status === 201) {
+          alert("註冊成功！請前往登入");
           window.location.href = "doctor_login.html";
         } else {
-          alert(data.message || "註冊失敗");
+          // 讀取後端回傳的 JSON message
+          const err = await res.json();
+          alert(err.message || "註冊失敗");
         }
       })
       .catch(err => {
-        alert("伺服器錯誤，請稍後再試");
         console.error(err);
+        alert("網路錯誤，請稍後再試");
       });
     });
   </script>

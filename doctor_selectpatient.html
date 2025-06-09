@@ -30,6 +30,10 @@
       background-color: #3b82f6;
       color: white;
       border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2563eb;
     }
   </style>
 </head>
@@ -39,7 +43,7 @@
     <form id="patientForm">
       <label for="patient">選擇病人：</label>
       <select name="patientId" id="patient" required>
-        <!-- 動態由後端填入 -->
+        <option value="">載入中…</option>
       </select>
       <button type="submit">查詢</button>
     </form>
@@ -50,22 +54,22 @@
       const token = localStorage.getItem('token');
       if (!token) {
         alert('請先登入');
+        window.location.href = 'patient_login.html';
         return;
       }
 
-      // 1. 從後端撈出病人清單
+      // 1. 從後端撈出所有病人
       fetch('http://localhost:8080/api/v1/patients', {
-        headers: {
-          'Authorization': 'Bearer ' + token
-        }
+        headers: { 'Authorization': 'Bearer ' + token }
       })
       .then(res => {
         if (!res.ok) throw new Error('無法取得病人列表');
         return res.json();
       })
       .then(data => {
+        // 後端應回傳 { error: false, patients: [ { patient_id, patient_name, ... }, … ] }
         const sel = document.getElementById('patient');
-        sel.innerHTML = '';
+        sel.innerHTML = '<option value="">請選擇病人</option>';
         data.patients.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.patient_id;
@@ -78,10 +82,14 @@
         alert('讀取病人清單失敗：' + err.message);
       });
 
-      // 2. 攔截表單，轉到 patient_history.html 並帶上 patientId
+      // 2. 表單送出 → 帶 patientId 跳轉到 patient_history.html
       document.getElementById('patientForm').addEventListener('submit', e => {
         e.preventDefault();
         const pid = document.getElementById('patient').value;
+        if (!pid) {
+          alert('請選擇一位病人');
+          return;
+        }
         window.location.href = `patient_history.html?patientId=${encodeURIComponent(pid)}`;
       });
     });

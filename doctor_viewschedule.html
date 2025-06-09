@@ -40,7 +40,6 @@
       gap: 15px;
       background-color: #fff;
       height: calc(100vh - 60px);
-      /* box-shadow 移除，改為無陰影 */
       overflow-y: auto;
     }
     .sidebar .menu-item {
@@ -77,8 +76,8 @@
       background-color: #f0f0f0;
     }
     .main-content {
-      margin-left: 220px; /* 側邊欄 220px + 間隔 20px */
-      padding: 50px;
+      margin-left: 240px; /* 側邊欄 220px + 20px padding */
+      padding: 80px 20px 20px;
     }
   </style>
 </head>
@@ -106,46 +105,86 @@
     <a href="doctor_selectpatient.html" class="menu-item">病患病歷及回饋查詢</a>
     <a href="logout.html" class="menu-item">登出</a>
   </aside>
+
   <div class="main-content">
     <h1>醫師班表一覽</h1>
-    <div id="scheduleTableContainer"></div>
+    <div id="scheduleTableContainer">
+      <p>載入中…</p>
+    </div>
   </div>
 
   <script>
-    const scheduleData = JSON.parse(localStorage.getItem("doctorSchedule"));
-
-    function renderScheduleTable(data) {
-      if (!data || Object.keys(data).length === 0) {
-        document.getElementById("scheduleTableContainer").innerHTML = "<p>尚未排班。</p>";
+    (async function() {
+      const token = localStorage.getItem('token');
+      const doctorId = localStorage.getItem('doctor_id');
+      if (!token || !doctorId) {
+        alert('請先登入');
+        location.href = 'portal.html';
         return;
       }
 
-      let html = `<table>
-        <tr>
-          <th>日期</th>
-          <th>早診(9:00-12:00)</th>
-          <th>午診(14:00-17:00)</th>
-          <th>晚診(19:00-22:00)</th>
-        </tr>`;
+      try {
+        const res = await fetch(`http://localhost:8080/api/v1/doctors/${doctorId}/schedule`, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const j = await res.json();
+        if (j.error) throw new Error(j.message);
 
-      const sortedDates = Object.keys(data).sort();
+        // j.schedule 是後端回傳的 Appointment 陣列
+        const raw = j.schedule;
+        const scheduleMap = {};
 
-      for (let date of sortedDates) {
-        const shifts = data[date];
-        html += `
-          <tr>
-            <td>${date}</td>
-            <td>${shifts.includes("morning") ? "✔️" : ""}</td>
-            <td>${shifts.includes("afternoon") ? "✔️" : ""}</td>
-            <td>${shifts.includes("evening") ? "✔️" : ""}</td>
-          </tr>`;
+        raw.forEach(appt => {
+          const dt = new Date(appt.appointment_time);
+          const date = dt.toISOString().slice(0,10);
+          const hour = dt.getHours();
+          let slot;
+          if      (hour >= 9  && hour < 12) slot = 'morning';
+          else if (hour >= 14 && hour < 17) slot = 'afternoon';
+          else if (hour >= 19 && hour < 22) slot = 'evening';
+          else return; // 不在班表時段
+          if (!scheduleMap[date]) scheduleMap[date] = new Set();
+          scheduleMap[date].add(slot);
+        });
+
+        // 轉成畫表需要的格式
+        const grouped = {};
+        Object.keys(scheduleMap).sort().forEach(date => {
+          grouped[date] = Array.from(scheduleMap[date]);
+        });
+
+        renderScheduleTable(grouped);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('scheduleTableContainer').innerHTML =
+          `<p style="color:red;">讀取班表失敗：${err.message}</p>`;
       }
 
-      html += "</table>";
-      document.getElementById("scheduleTableContainer").innerHTML = html;
-    }
-
-    renderScheduleTable(scheduleData);
+      function renderScheduleTable(data) {
+        if (!data || Object.keys(data).length === 0) {
+          document.getElementById('scheduleTableContainer').innerHTML = '<p>尚無班表資料。</p>';
+          return;
+        }
+        let html = `<table>
+          <tr>
+            <th>日期</th>
+            <th>早診 (09:00–12:00)</th>
+            <th>午診 (14:00–17:00)</th>
+            <th>晚診 (19:00–22:00)</th>
+          </tr>`;
+        for (const date of Object.keys(data)) {
+          const slots = data[date];
+          html += `<tr>
+            <td>${date}</td>
+            <td>${slots.includes('morning')   ? '✔️' : ''}</td>
+            <td>${slots.includes('afternoon') ? '✔️' : ''}</td>
+            <td>${slots.includes('evening')   ? '✔️' : ''}</td>
+          </tr>`;
+        }
+        html += `</table>`;
+        document.getElementById('scheduleTableContainer').innerHTML = html;
+      }
+    })();
   </script>
 </body>
 </html>

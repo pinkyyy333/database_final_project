@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>醫師端 - 今日病患清單</title>
   <style>
     body {
@@ -43,7 +44,6 @@
       gap: 15px;
       background-color: #fff;
       height: calc(100vh - 60px);
-      /* box-shadow 移除，改為無陰影 */
       overflow-y: auto;
     }
     .sidebar .menu-item {
@@ -71,12 +71,10 @@
       border-radius: 15px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
     }
-
     h2 {
       color: #003366;
       margin-top: 0;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -86,37 +84,24 @@
       border-radius: 8px;
       overflow: hidden;
     }
-
     th, td {
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid #ddd;
     }
-
     th {
       background-color: #38bdf8;
       color: white;
     }
-
     tr:hover {
       background-color: #f1f5f9;
     }
-
     .status {
       font-weight: bold;
     }
-
-    .status.已報到 {
-      color: green;
-    }
-
-    .status.未出現 {
-      color: red;
-    }
-
-    .status.已完成 {
-      color: gray;
-    }
+    .status.已報到 { color: green; }
+    .status.未出現 { color: red; }
+    .status.已完成 { color: gray; }
   </style>
 </head>
 <body>
@@ -143,6 +128,7 @@
     <a href="doctor_selectpatient.html" class="menu-item">病患病歷及回饋查詢</a>
     <a href="logout.html" class="menu-item">登出</a>
   </aside>
+  
   <div class="content">
     <h2>今日病患清單</h2>
     <table>
@@ -162,56 +148,86 @@
   </div>
 
   <script>
-    fetch('/api/today_patients')
-      .then(response => response.json())
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const doctorId = localStorage.getItem('doctor_id');
+      if (!token || !doctorId) {
+        alert('請先以醫師身份登入');
+        window.location.href = 'portal.html';
+        return;
+      }
+
+      // 取得醫師今日所有預約
+      fetch(`http://localhost:8080/api/v1/doctors/${doctorId}/schedule`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
       .then(data => {
+        if (data.error) throw new Error(data.message);
+        const all = data.schedule || [];                                                 // :contentReference[oaicite:0]{index=0}
+        const today = new Date().toISOString().slice(0,10);
+        // 篩選「今日」預約
+        const todays = all.filter(a => a.appointment_time.slice(0,10) === today);         // :contentReference[oaicite:1]{index=1}
+
         const tbody = document.getElementById('patientTableBody');
         tbody.innerHTML = '';
-
-        if (data.length === 0) {
+        if (todays.length === 0) {
           tbody.innerHTML = '<tr><td colspan="5">今天沒有排程病患。</td></tr>';
         } else {
-          data.forEach(patient => {
+          todays.forEach((appt, idx) => {
+            // 狀態文字對應
+            let disp;
+            switch (appt.status) {
+              case 'checked_in': disp = '已報到'; break;
+              case 'completed':  disp = '已完成'; break;
+              case 'cancelled':  disp = '已取消'; break;
+              case 'no_show':    disp = '未出現'; break;
+              default:           disp = '待報到';
+            }
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td>${patient.name}</td>
-              <td>${patient.id}</td>
-              <td>${patient.appointmentTime}</td>
-              <td>${patient.appointmentTime}</td>
-              <td class="status ${patient.status}" data-id="${patient.appointmentId}" data-time="${patient.appointmentTime}">${patient.status}</td>
+              <td>${appt.patient_id}</td>
+              <td>${appt.patient_id}</td>
+              <td>${idx + 1}</td>
+              <td>${new Date(appt.appointment_time).toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})}</td>
+              <td class="status ${disp}">${disp}</td>
             `;
+            // 暫存預約 ID、時間以供未出現檢查
+            tr.querySelector('.status').dataset.id = appt.appointment_id;
+            tr.querySelector('.status').dataset.time = appt.appointment_time;
             tbody.appendChild(tr);
           });
+          checkNoShow();   // 初次檢查未出現
         }
-        checkNoShow();   // 【4】渲染後立即檢查一次
       })
-      .catch(error => {
-        console.error('載入錯誤:', error);
-        document.getElementById('patientTableBody').innerHTML = '<tr><td colspan="5">無法取得資料。</td></tr>';
+      .catch(err => {
+        console.error(err);
+        document.getElementById('patientTableBody').innerHTML = '<tr><td colspan="5">載入失敗：' + err.message + '</td></tr>';
       });
-      /**
-     * 【3】自動未出現檢查函式
-     *   - 每分鐘檢查一次已過預約時間但仍為 "booked" 的狀態
-     *   - 標記為 "未出現" 並更新樣式
-     *   - TODO: 呼叫後端 PATCH /api/appointments/:id/status 更新資料庫
-     */
-    function checkNoShow() {
-      const now = new Date();
-      document.querySelectorAll('.status[data-time]').forEach(cell => {
-        const apptTime = new Date(cell.dataset.time);
-        if (cell.textContent === 'booked' && now > apptTime) {
-          const id = cell.dataset.id;
-          cell.textContent = '未出現';
-          cell.classList.remove('booked');
-          cell.classList.add('未出現');
-          cell.classList.add('no-show');
-          // TODO: call backend PATCH `/api/appointments/${id}/status` with { status: 'no_show' }
-        }
-      });
-    }
 
-    // 定時執行
-    setInterval(checkNoShow, 60 * 1000);
+      // 每分鐘檢查一次，標記未出現並呼叫後端更新
+      function checkNoShow() {
+        const now = new Date();
+        document.querySelectorAll('.status').forEach(cell => {
+          const id   = cell.dataset.id;
+          const time = new Date(cell.dataset.time);
+          if (cell.textContent === '待報到' && now > time) {
+            cell.textContent = '未出現';
+            cell.classList.add('未出現');
+            // 呼叫後端更新狀態
+            fetch(`http://localhost:8080/api/v1/appointments/${id}/status`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+              },
+              body: JSON.stringify({ status: 'no_show' })
+            });
+          }
+        });
+      }
+      setInterval(checkNoShow, 60 * 1000);
+    });
   </script>
 </body>
 </html>

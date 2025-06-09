@@ -67,7 +67,8 @@
     input[type="text"],
     input[type="password"],
     input[type="date"],
-    input[type="tel"] {
+    input[type="tel"],
+    select {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -86,18 +87,6 @@
     legend {
       font-weight: bold;
       color: #2c3e50;
-    }
-
-    .address-group,
-    .emergency-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .address-group input,
-    .emergency-group input {
-      flex: 1 1 45%;
     }
 
     .checkbox-group {
@@ -133,9 +122,6 @@
       background-color: #dc9003;
     }
 
-    button:hover {
-      background-color: #2980b9;
-    }
     .register-link {
       display: block;
       text-align: center;
@@ -171,41 +157,37 @@
       <label for="name">姓名</label>
       <input type="text" id="name" placeholder="請輸入真實姓名" required>
 
-      <label for="dob">出生年月日:</label>
+      <label for="dob">出生年月日</label>
       <input type="date" id="dob" required>
 
-      <label for="idNumber">帳號:</label>
+      <label for="idNumber">帳號 (身分證/居留證號)</label>
       <input type="text" id="idNumber" placeholder="請輸入身分證 / 居留證號" required>
 
-      <label for="password">密碼:</label>
-      <input type="password" id="password" placeholder="8~15碼，含英文大小寫" required>
+      <label for="password">密碼</label>
+      <input type="password" id="password" placeholder="8~15 碼，含英文大小寫" required>
 
-      <label for="phone">手機號碼:</label>
-      <input type="text" id="phone" placeholder="輸入手機號碼" required />
+      <label for="phone">手機號碼</label>
+      <input type="text" id="phone" placeholder="09 開頭 10 碼" required/>
 
-      <label for="gender">性別:</label>
+      <label for="gender">性別</label>
       <select id="gender" required>
-      <option value="">請選擇</option>
-      <option value="男">男</option>
-      <option value="女">女</option>
-      <option value="其他">其他</option>
-</select>
+        <option value="">請選擇</option>
+        <option value="男">男</option>
+        <option value="女">女</option>
+        <option value="其他">其他</option>
+      </select>
 
-<!-- 新增：戶籍地址（單欄位） -->
-<label for="address">戶籍地址:</label>
-<input type="text" id="address" placeholder="請輸入完整戶籍地址" required />
-
+      <label for="address">戶籍地址</label>
+      <input type="text" id="address" placeholder="請輸入完整戶籍地址" required />
 
       <fieldset>
-        <legend>緊急聯絡人:</legend>
-        <div class="emergency-group">
-          <input type="text" id="emergency_name" placeholder="姓名" required />
-          <input type="text" id="emergency_phone" placeholder="手機號碼" required />
-          <input type="text" id="emergency_relation" placeholder="關係" required />
-        </div>
+        <legend>緊急聯絡人</legend>
+        <input type="text" id="emergency_name" placeholder="姓名" required />
+        <input type="text" id="emergency_phone" placeholder="手機號碼" required />
+        <input type="text" id="emergency_relation" placeholder="關係" required />
       </fieldset>
 
-      <label>過敏藥物:</label>
+      <label>過敏藥物</label>
       <div class="checkbox-group">
         <label><input type="checkbox" name="drug_allergy[]" value="無"> 無</label>
         <label><input type="checkbox" name="drug_allergy[]" value="盤尼西林"> 盤尼西林</label>
@@ -215,7 +197,7 @@
         </label>
       </div>
 
-      <label>過敏食物:</label>
+      <label>過敏食物</label>
       <div class="checkbox-group">
         <label><input type="checkbox" name="food_allergy[]" value="無"> 無</label>
         <label><input type="checkbox" name="food_allergy[]" value="花生"> 花生</label>
@@ -225,7 +207,7 @@
         </label>
       </div>
 
-      <label>過去病史:</label>
+      <label>過去病史</label>
       <div class="checkbox-group">
         <label><input type="checkbox" name="medical_history[]" value="無"> 無</label>
         <label><input type="checkbox" name="medical_history[]" value="高血壓"> 高血壓</label>
@@ -241,164 +223,48 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      function getCheckedValues(name) {
-        return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
+    document.getElementById("registerForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // helper: 取出所有被勾選的 checkbox
+      function getChecked(name) {
+        return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+                    .map(el => el.value);
       }
 
-      document.getElementById("registerForm").addEventListener("submit", function (e) {
-        e.preventDefault();
+      const idNumber = document.getElementById("idNumber").value.trim();
+      const data = {
+        patient_id:        idNumber,
+        patient_name:      document.getElementById("name").value.trim(),
+        patient_gender:    document.getElementById("gender").value,
+        patient_birth:     document.getElementById("dob").value,
+        patient_phone:     document.getElementById("phone").value.trim(),
+        password:          document.getElementById("password").value,
+        address:           document.getElementById("address").value.trim(),
+        emergency_name:    document.getElementById("emergency_name").value.trim(),
+        emergency_phone:   document.getElementById("emergency_phone").value.trim(),
+        emergency_relation:document.getElementById("emergency_relation").value.trim(),
+        drug_allergy:      getChecked("drug_allergy[]"),
+        food_allergy:      getChecked("food_allergy[]"),
+        medical_history:   getChecked("medical_history[]")
+      };
 
-        const name = document.getElementById("name").value.trim();
-        const idNumber = document.getElementById("idNumber").value.trim();
-        const dob = document.getElementById("dob").value;
-        const password = document.getElementById("password").value;
-        const phone = document.getElementById("phone").value.trim();
-        const emergencyPhone = document.getElementById("emergency_phone").value.trim();
-
-        const idRegex = /^[A-Z][0-9]{9}$/;
-        const pwRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,15}$/;
-        const phoneRegex = /^[0-9]{10}$/;
-
-        if (!name || !dob || !password || !phone) {
-          alert("請填寫所有欄位！");
-          return;
+      fetch("http://localhost:8080/api/v1/patients/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (!json.error) {
+          alert("註冊成功！");
+          window.location.href = "patient_login.html";
+        } else {
+          alert("註冊失敗：" + json.message);
         }
-
-        if (!idRegex.test(idNumber)) {
-          alert("身分證/居留證號格式錯誤！需1大寫英文字母+9位數字");
-          return;
-        }
-
-        if (!pwRegex.test(password)) {
-          alert("密碼格式錯誤！必須8~15碼，且含英文大小寫");
-          return;
-        }
-
-        if (!phoneRegex.test(phone)) {
-          alert("請輸入正確的電話（10位數字）！");
-          return;
-        }
-
-        if (!phoneRegex.test(emergencyPhone)) {
-          alert("請輸入正確的緊急聯絡人電話（10位數字）！");
-          return;
-        }
-
-        // 驗證藥物過敏「其他」文字是否填寫
-        const drugOtherCheckbox = document.querySelector('input[name="drug_allergy[]"][value="其他"]');
-        const drugOtherText = document.querySelector('input[name="drug_allergy_other"]').value.trim();
-        if (drugOtherCheckbox.checked && drugOtherText === "") {
-          alert("請填寫其他藥物過敏項目！");
-          return;
-        }
-
-        // 驗證食物過敏「其他」文字是否填寫
-        const foodOtherCheckbox = document.querySelector('input[name="food_allergy[]"][value="其他"]');
-        const foodOtherText = document.querySelector('input[name="food_allergy_other"]').value.trim();
-        if (foodOtherCheckbox.checked && foodOtherText === "") {
-          alert("請填寫其他食物過敏項目！");
-          return;
-        }
-
-        // 驗證病史「其他」文字是否填寫
-        const historyOtherCheckbox = document.querySelector('input[name="medical_history[]"][value="其他"]');
-        const historyOtherText = document.querySelector('input[name="medical_history_other"]').value.trim();
-        if (historyOtherCheckbox.checked && historyOtherText === "") {
-          alert("請填寫其他過去病史項目！");
-          return;
-        }
-
-        // 至少勾選一個過敏藥物
-        const drugChecked = document.querySelectorAll('input[name="drug_allergy[]"]:checked').length > 0;
-        if (!drugChecked) {
-          alert("請選擇至少一項藥物過敏！");
-          return;
-        }
-
-        // 至少勾選一個過敏食物
-        const foodChecked = document.querySelectorAll('input[name="food_allergy[]"]:checked').length > 0;
-        if (!foodChecked) {
-          alert("請選擇至少一項食物過敏！");
-          return;
-        }
-
-        // 至少勾選一個病史
-        const historyChecked = document.querySelectorAll('input[name="medical_history[]"]:checked').length > 0;
-        if (!historyChecked) {
-          alert("請選擇至少一項過去病史！");
-          return;
-        }
-
-        // 組成要送給後端的資料
-        /*
-        const formData = {
-          name,
-          idNumber,
-          dob,
-          password,
-          phone,
-          curr_address: {
-            city: document.getElementById("curr_city").value.trim(),
-            district: document.getElementById("curr_district").value.trim(),
-            street: document.getElementById("curr_street").value.trim(),
-            lane: document.getElementById("curr_lane").value.trim(),
-            number: document.getElementById("curr_number").value.trim()
-          },
-          perm_address: {
-            city: document.getElementById("perm_city").value.trim(),
-            district: document.getElementById("perm_district").value.trim(),
-            street: document.getElementById("perm_street").value.trim(),
-            lane: document.getElementById("perm_lane").value.trim(),
-            number: document.getElementById("perm_number").value.trim()
-          },
-          emergency_contact: {
-            name: document.getElementById("emergency_name").value.trim(),
-            phone: document.getElementById("emergency_phone").value.trim(),
-            relation: document.getElementById("emergency_relation").value.trim()
-          },
-          drug_allergy: getCheckedValues("drug_allergy[]"),
-          drug_allergy_other: drugOtherText,
-          food_allergy: getCheckedValues("food_allergy[]"),
-          food_allergy_other: foodOtherText,
-          medical_history: getCheckedValues("medical_history[]"),
-          medical_history_other: historyOtherText
-        };*/
-        const formData = {
-          patient_id: idNumber,
-          patient_name: name,
-          patient_gender: "男",    // 硬填，或加入輸入欄位
-          patient_birth: dob,
-          patient_phone: phone,
-          password: password
-        };
-
-
-        // 用 fetch 送給後端
-        fetch('http://localhost:8080/api/v1/patients/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('註冊失敗，伺服器錯誤');
-            }
-            return response.json();
-          })
-          .then(data => {
-            console.log(data);
-            if (data.success) {
-              alert("註冊成功！");
-              window.location.href = "patient_login.html";
-            } else {
-              alert("註冊失敗：" + (data.message || ""));
-            }
-          })
-          .catch(error => {
-            alert("網路錯誤或伺服器無回應，請稍後再試。");
-            console.error(error);
-          });
+      })
+      .catch(() => {
+        alert("網路或伺服器錯誤，請稍後再試");
       });
     });
   </script>

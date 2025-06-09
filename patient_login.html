@@ -96,6 +96,7 @@
     }
   </style>
 </head>
+
 <body>
   <header class="navbar">
     <div class="logo">
@@ -110,6 +111,7 @@
       <a href="portal.html">登入</a>
     </nav>
   </header>
+
   <div class="login-container">
     <h2>病人登入</h2>
     <form id="loginForm">
@@ -125,64 +127,48 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      document.getElementById("loginForm").addEventListener("submit", function (e) {
-        e.preventDefault();
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
 
-        const account = document.getElementById("account").value.trim();
-        const password = document.getElementById("password").value;
+      const account = document.getElementById("account").value.trim();
+      const password = document.getElementById("password").value;
 
-        const idRegex = /^[A-Z][0-9]{9}$/;
-        const nhicRegex = /^[0-9]{12}$/;
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,15}$/;
+      const idRegex = /^[A-Z][0-9]{9}$/;
+      const nhicRegex = /^[0-9]{12}$/;
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,15}$/;
 
-        if (!(idRegex.test(account) || nhicRegex.test(account))) {
-          alert("帳號格式錯誤，請輸入有效的身分證號、健保卡號或居留證號。");
-          return;
+      if (!(idRegex.test(account) || nhicRegex.test(account))) {
+        alert("帳號格式錯誤，請輸入有效的身分證號、健保卡號或居留證號。");
+        return;
+      }
+
+      if (!passwordRegex.test(password)) {
+        alert("密碼格式錯誤，需 8~15 碼且包含大小寫英文字母。");
+        return;
+      }
+
+      fetch("http://localhost:8080/api/v1/patients/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: account,
+          password: password
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) {
+          // 登入成功，儲存 token 與 patient_id
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("patient_id", account);
+          window.location.href = "appointment.html";
+        } else {
+          alert("登入失敗：" + data.message);
         }
-
-        if (!passwordRegex.test(password)) {
-          alert("密碼格式錯誤，需 8~15 碼且包含大小寫英文字母。");
-          return;
-        }
-
-        fetch('http://localhost:8080/api/v1/patients/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-            body: JSON.stringify({
-                patient_id: account,    // 從「account」改為「patient_id」
-                password: password
-  })
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('登入失敗，伺服器錯誤');
-          }
-          return response.json();
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            alert("登入成功！");
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("account", account);
-            localStorage.setItem("role", "patient");
-            window.location.href = "appointment.html";
-          } else {
-            const goToRegister = confirm("登入失敗，帳號或密碼錯誤。\n是否前往註冊頁面？");
-            if (goToRegister) {
-              window.location.href = "patient_register.html";
-            }
-          }
-        })
-        .catch(error => {
-          alert("網路錯誤或伺服器無回應，請稍後再試。");
-          console.error('fetch error:', error);
-        });
+      })
+      .catch(() => {
+        alert("網路錯誤或伺服器無回應，請稍後再試。");
       });
-
     });
   </script>
 </body>

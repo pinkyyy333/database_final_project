@@ -1,143 +1,48 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
-<style>
-  body {
-    font-family: "Microsoft JhengHei", sans-serif;
-    background-color: #f2f7fb;
-    margin: 0;
-    padding: 20px;
-  }
-
-  .container {
-    max-width: 800px;
-    margin: auto;
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  }
-
-  h1 {
-    text-align: center;
-    color: #0a57a3;
-    margin-bottom: 30px;
-  }
-
-  h2 {
-    color: #0a57a3;
-    border-bottom: 2px solid #0a57a3;
-    padding-bottom: 5px;
-    margin-top: 30px;
-  }
-
-  .record {
-    background-color: #f1f5fb;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 10px;
-  }
-
-  ul {
-    padding-left: 20px;
-  }
-
-  p, li {
-    line-height: 1.6;
-  }
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const token = localStorage.getItem('token');
-  const patientId = localStorage.getItem('patient_id');
-  if (!token || !patientId) {
-    alert('請先登入並帶入 patient_id');
-    return;
-  }
-
-  // 1. 取得並填入基本資訊＋過敏、過去病史
-  fetch('http://localhost:8080/api/v1/patients/profile', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  .then(res => res.json())
-  .then(data => {
-    const p = data.patient;
-    // 填基本資訊
-    const infoPs = document.querySelectorAll('.profile p');
-    infoPs[0].textContent = '姓名：' + p.patient_name;
-    infoPs[1].textContent = '身分證字號：' + p.patient_id;
-    infoPs[2].textContent = '出生年月日：' + p.patient_birth;
-
-    // 填過敏
-    const allergySection = document.querySelector('.allergy');
-    const uls = allergySection.querySelectorAll('ul');
-    uls[0].innerHTML = '';
-    (p.allergies?.drugs || []).forEach(d => {
-      const li = document.createElement('li');
-      li.textContent = `${d.name} - ${d.severity} - ${d.reaction}`;
-      uls[0].appendChild(li);
-    });
-    uls[1].innerHTML = '';
-    (p.allergies?.foods || []).forEach(f => {
-      const li = document.createElement('li');
-      li.textContent = `${f.name} - ${f.severity} - ${f.reaction}`;
-      uls[1].appendChild(li);
-    });
-
-    // 填過去病史（第二個 .history）
-    const pastSection = document.querySelectorAll('.history')[1];
-    const pastUl = pastSection.querySelector('ul');
-    pastUl.innerHTML = '';
-    (p.past_history || []).forEach(item => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      pastUl.appendChild(li);
-    });
-  })
-  .catch(err => {
-    console.error(err);
-    alert('取得個人資料失敗：' + err.message);
-  });
-
-  // 2. 取得並填入歷次看診紀錄（第一個 .history）
-  fetch(`http://localhost:8080/api/v1/appointments/patient/${patientId}`, {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  .then(res => res.json())
-  .then(data => {
-    const appts = data.appointments || [];
-    const apptSection = document.querySelector('.history');
-    // 移除原本的 .record 節點
-    apptSection.querySelectorAll('.record').forEach(r => r.remove());
-
-    if (appts.length === 0) {
-      apptSection.innerHTML += '<p>尚無看診紀錄。</p>';
-    } else {
-      appts.forEach(a => {
-        const div = document.createElement('div');
-        div.className = 'record';
-        div.innerHTML = `
-          <p><strong>日期：</strong>${new Date(a.appointment_time).toISOString().slice(0,10)}</p>
-          <p><strong>科別：</strong>${a.department_name || a.department_id}</p>
-          <p><strong>主訴：</strong>${a.service_type}</p>
-          <p><strong>診斷：</strong>${a.diagnosis || '—'}</p>
-          <p><strong>處方：</strong>${a.prescription || a.treatment || '—'}</p>
-        `;
-        apptSection.appendChild(div);
-      });
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert('取得看診紀錄失敗：' + err.message);
-  });
-});
-</script>
-
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>病歷紀錄</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #f2f7fb;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #0a57a3;
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #0a57a3;
+      border-bottom: 2px solid #0a57a3;
+      padding-bottom: 5px;
+      margin-top: 30px;
+    }
+    .record {
+      background-color: #f1f5fb;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    p, li {
+      line-height: 1.6;
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -145,48 +50,86 @@ document.addEventListener('DOMContentLoaded', function() {
     
     <section class="profile">
       <h2>基本資訊</h2>
-      <p>姓名：王小明</p>
-      <p>身分證字號：A123456789</p>
-      <p>出生年月日：1990-01-01</p>
+      <p id="name"></p>
+      <p id="id"></p>
+      <p id="birth"></p>
+    </section>
+
+    <section class="allergy">
+      <h2>過敏與病史</h2>
+      <p><strong>過敏藥物：</strong><span id="drugAllergy"></span></p>
+      <p><strong>過敏食物：</strong><span id="foodAllergy"></span></p>
+      <p><strong>過去病史：</strong><span id="medicalHistory"></span></p>
     </section>
 
     <section class="history">
       <h2>歷次看診紀錄</h2>
-      <div class="record">
-        <p><strong>日期：</strong>2025-05-10</p>
-        <p><strong>科別：</strong>內科</p>
-        <p><strong>主訴：</strong>咳嗽、喉嚨痛</p>
-        <p><strong>診斷：</strong>上呼吸道感染</p>
-        <p><strong>處方：</strong>感冒糖漿、退燒藥</p>
-      </div>
-      <div class="record">
-        <p><strong>日期：</strong>2025-03-02</p>
-        <p><strong>科別：</strong>皮膚科</p>
-        <p><strong>主訴：</strong>皮膚紅腫</p>
-        <p><strong>診斷：</strong>濕疹</p>
-        <p><strong>處方：</strong>外用藥膏</p>
-      </div>
-    </section>
-
-    <section class="allergy">
-      <h2>過敏藥物</h2>
-      <ul>
-        <li>盤尼西林（Penicillin） - 嚴重 - 呼吸困難</li>
-      </ul>
-
-      <h2>過敏食物</h2>
-      <ul>
-        <li>花生 - 嘔吐、皮疹</li>
-      </ul>
-    </section>
-
-    <section class="history">
-      <h2>過去病史</h2>
-      <ul>
-        <li>氣喘（2010 年初發，持續使用藥物控制）</li>
-        <li>闌尾炎（2018 年開刀治療）</li>
-      </ul>
+      <div id="records"></div>
     </section>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const patientId = localStorage.getItem('patient_id');
+      if (!token || !patientId) {
+        alert('請先登入並帶入 patient_id');
+        window.location.href = 'patient_login.html';
+        return;
+      }
+
+      // 1. 取得基本資訊 + 過敏、病史
+      fetch('http://localhost:8080/api/v1/patients/profile', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.message);
+        const p = data.patient;
+        document.getElementById('name').textContent  = '姓名：' + p.patient_name;
+        document.getElementById('id').textContent    = '身分證字號：' + p.patient_id;
+        document.getElementById('birth').textContent = '出生年月日：' + p.patient_birth;
+
+        document.getElementById('drugAllergy').textContent    = (p.drug_allergy || []).join('，') || '無';
+        document.getElementById('foodAllergy').textContent    = (p.food_allergy || []).join('，') || '無';
+        document.getElementById('medicalHistory').textContent = (p.medical_history || []).join('，') || '無';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('取得個人資料失敗：' + err.message);
+      });
+
+      // 2. 取得歷次看診紀錄
+      fetch(`http://localhost:8080/api/v1/appointments/patient/${patientId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.message);
+        const appts = data.appointments || [];
+        const container = document.getElementById('records');
+        if (appts.length === 0) {
+          container.innerHTML = '<p>尚無看診紀錄。</p>';
+        } else {
+          appts.forEach(a => {
+            const d = new Date(a.appointment_time);
+            const record = document.createElement('div');
+            record.className = 'record';
+            record.innerHTML = `
+              <p><strong>日期：</strong>${d.toISOString().slice(0,10)}</p>
+              <p><strong>科別 ID：</strong>${a.department_id}</p>
+              <p><strong>服務類型：</strong>${a.service_type}</p>
+              <p><strong>狀態：</strong>${a.status}</p>
+            `;
+            container.appendChild(record);
+          });
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('取得看診紀錄失敗：' + err.message);
+      });
+    });
+  </script>
 </body>
 </html>

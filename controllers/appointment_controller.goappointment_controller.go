@@ -12,11 +12,11 @@ import (
 
 // AppointmentRequest 包含服務類型
 type AppointmentRequest struct {
-	DepartmentID    uint      `json:"department_id"`
-	DoctorID        uint      `json:"doctor_id"`
-	PatientID       string    `json:"patient_id"`
-	AppointmentTime time.Time `json:"appointment_time"`
-	ServiceType     string    `json:"service_type"`
+    DeptID          int       `json:"dept_id" binding:"required"`
+    DoctorID        string    `json:"doctor_id" binding:"required"`
+    PatientID       string    `json:"patient_id" binding:"required"`
+    AppointmentTime time.Time `json:"appointment_time" binding:"required"`
+    ServiceType     string    `json:"service_type"`
 }
 
 // CreateAppointment 新增預約（含非看診服務）
@@ -40,7 +40,7 @@ func CreateAppointment(c *gin.Context) {
 		return
 	}
 	a := models.Appointment{
-		DepartmentID:    req.DepartmentID,
+		DeptID:          req.DeptID,
 		DoctorID:        req.DoctorID,
 		PatientID:       req.PatientID,
 		AppointmentTime: req.AppointmentTime,

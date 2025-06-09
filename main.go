@@ -1,29 +1,30 @@
-// main.go
-package controllers
+package main
 
 import (
 	"clinic-backend/db"
-	"clinic-backend/middleware"
 	"clinic-backend/routes"
+	services "clinic-backend/service"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	r := gin.Default()
+	r.Use(cors.Default())
 	db.InitDB()
 
-	r := gin.Default()
-	r.Use(middleware.CORSMiddleware())
+	// 啟動背景任務
+	go services.StartReminderCron()
+	go services.StartNoShowCron()
 
-	routes.RegisterDoctorRoutes(r)
+	// 註冊路由
 	routes.RegisterAppointmentRoutes(r)
-
-
-func main() {
-  db.Init()                   // ← 這裡把 db.DB 設為 *sql.DB
-  r := gin.Default()
-  routes.RegisterDoctorRoutes(r)
-  routes.RegisterAppointmentRoutes(r)
-  // … 其他 middleware / route …
-  r.Run(":8080")
+	routes.RegisterDoctorRoutes(r)
+	routes.RegisterPatientRoutes(r)
+	routes.RegisterManagerRoutes(r)
+	routes.RegisterBonusRoutes(r)
+	routes.RegisterFeedbackRoutes(r)
+	routes.RegisterDepartmentRoutes(r)
+	r.Run()
 }

@@ -2,12 +2,15 @@ package controllers
 
 import (
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
 	"clinic-backend/db"
 	"clinic-backend/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -175,9 +178,49 @@ func LoginManager(c *gin.Context) {
 		return
 	}
 
-	// TODO: 簽發 JWT 並回傳到前端
+	// 簽發 JWT
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"manager_id": m.ManagerID,
+		"exp":        time.Now().Add(24 * time.Hour).Unix(),
+	})
+	secret := os.Getenv("JWT_SECRET")
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Token 簽發失敗",
+			"code":    500,
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		//"token":   tokenString,
+		"token":   tokenString,
 	})
+}
+
+func GenerateReport(c *gin.Context) {
+	var totalDoctors int64
+	if err := db.DB.Model(&models.Doctor{}).Count(&totalDoctors).Error; err != nil {
+		RespondError(c, http.StatusInternalServerError, "查詢醫師總數失敗")
+		return
+	}
+	var totalAppointments int64
+	if err := db.DB.Model(&models.Appointment{}).Count(&totalAppointments).Error; err != nil {
+		RespondError(c, http.StatusInternalServerError, "查詢預約總數失敗")
+		return
+	}
+	var totalFeedbacks int64
+	if err := db.DB.Model(&models.Feedback{}).Count(&totalFeedbacks).Error; err != nil {
+		RespondError(c, http.StatusInternalServerError, "查詢評價總數失敗")
+		return
+	}
+
+	report := gin.H{
+		"total_doctors":      totalDoctors,
+		"total_appointments": totalAppointments,
+		"total_feedbacks":    totalFeedbacks,
+	}
+	RespondOK(c, gin.H{"report": report})
 }

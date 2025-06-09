@@ -1,3 +1,4 @@
+// controllers/slot_controller.go
 package controllers
 
 import (
@@ -6,34 +7,45 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetAppointmentSlots returns the available appointment slots for a given doctor and month
+// GET /api/v1/slots?doctor_id=123&month=2025-06
 func GetAppointmentSlots(c *gin.Context) {
-	doctorID := c.Query("doctorId")
+	doctorID := c.Query("doctor_id")
 	month := c.Query("month")
-
-	// TODO: load real data from DB instead of hardcoded sample
-	c.JSON(http.StatusOK, gin.H{
-		"doctorId": doctorID,
-		"month":    month,
-		"slots": []gin.H{
-			{"date": month + "-01", "sessions": []string{"morning", "afternoon", "evening"}},
-			{"date": month + "-02", "sessions": []string{"morning", "evening"}},
-		},
-	})
-}
-
-// UpdateAppointmentSlots updates the available slots for a doctor
-func UpdateAppointmentSlots(c *gin.Context) {
-	var payload struct {
-		DoctorID string                `json:"doctorId"`
-		Slots    []map[string][]string `json:"slots"` // each item has date and sessions
-	}
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": true, "message": "參數錯誤"})
+	if doctorID == "" || month == "" {
+		RespondError(c, http.StatusBadRequest, "doctor_id 與 month 為必填參數")
 		return
 	}
 
-	// TODO: persist payload.Slots into DB
+	// TODO: 從 DB 撈真實資料，以下為範例
+	slots := []gin.H{
+		{"date": month + "-01", "sessions": []string{"morning", "afternoon", "evening"}},
+		{"date": month + "-02", "sessions": []string{"morning", "evening"}},
+	}
 
-	c.JSON(http.StatusOK, gin.H{"error": false, "message": "可預約時段已更新"})
+	RespondOK(c, gin.H{
+		"doctor_id": doctorID,
+		"month":     month,
+		"slots":     slots,
+	})
+}
+
+// PUT /api/v1/slots
+func UpdateAppointmentSlots(c *gin.Context) {
+	var payload struct {
+		DoctorID string                `json:"doctor_id"`
+		Slots    []map[string][]string `json:"slots"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		RespondError(c, http.StatusBadRequest, "參數錯誤")
+		return
+	}
+	if payload.DoctorID == "" || len(payload.Slots) == 0 {
+		RespondError(c, http.StatusBadRequest, "doctor_id 與 slots 均為必填")
+		return
+	}
+
+	// TODO: 將 payload.Slots 儲存至 DB，若操作失敗請回報錯誤
+	// if err := db.DB.Save(...); err != nil { RespondError(...); return }
+
+	RespondOK(c, gin.H{"message": "可預約時段已更新"})
 }

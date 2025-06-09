@@ -19,12 +19,12 @@ func main() {
 	go services.StartNoShowCron()
 
 	// 註冊路由
-	//routes.RegisterAppointmentRoutes(r)
-	//routes.RegisterDoctorRoutes(r)
+	routes.RegisterAppointmentRoutes(r)
+	routes.RegisterDoctorRoutes(r)
 	routes.RegisterPatientRoutes(r)
-	//routes.RegisterManagerRoutes(r)
-	//routes.RegisterBonusRoutes(r)
-	//routes.RegisterFeedbackRoutes(r)
-	//routes.RegisterDepartmentRoutes(r)
+	routes.RegisterManagerRoutes(r)
+	routes.RegisterBonusRoutes(r)
+	routes.RegisterFeedbackRoutes(r)
+	routes.RegisterDepartmentRoutes(r)
 	r.Run()
 }

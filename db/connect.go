@@ -35,11 +35,11 @@ func InitDB() {
 
 	if err := DB.AutoMigrate(
 		&models.Patient{},
-		//&models.Doctor{},
-		//&models.Department{},
-		//&models.Appointment{},
-		//&models.Feedback{},
-		//&models.Manager{},
+		&models.Doctor{},
+		&models.Department{},
+		&models.Appointment{},
+		&models.Feedback{},
+		&models.Manager{},
 	); err != nil {
 		log.Fatalf("AutoMigrate 失敗: %v", err)
 	}

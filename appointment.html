@@ -380,275 +380,106 @@
       section.appendChild(list);
       container.appendChild(section);
     }
-    const scheduleDataByMonth = {
-      "2025-06": {
-        "2025-06-01": {
-          dates: ["06/01", "06/02", "06/03", "06/04", "06/05", "06/06", "06/07"],
-          days: ["日", "一", "二", "三", "四", "五", "六"],
-          schedule: [
-            {
-              time: "上午 09:00~12:00",
-              dept: "1外科",
-              doctors: [
-                {}, // Sunday
-                { name: '陳建民', start: "08:30開診", full: true },
-                { name: '陳建民', start: "08:30開診", reg: "已掛到37號" },
-                { name: '林芳瑜', start: "08:30開診", full: true },
-                { name: '林芳瑜', start: "08:30開診" },
-                { name: '林芳瑜', start: "08:30開診", full: true },
-                {}, // Saturday
-              ]
-            },
-            {
-              time: "上午 09:00~12:00",
-              dept: "2內科",
-              doctors: [
-                {}, // Sun
-                { name: '張育誠', reg: "已掛到27號" },
-                { name: '周怡君', reg: "已掛到26號" },
-                { name: '張育誠', reg: "已掛到34號" },
-                { name: '張育誠', start: "08:30開診", reg: "已掛到37號" },
-                {}, {}, // Fri, Sat
-              ]
-            },
-          {
-              time: "上午 09:00~12:00",
-              dept: "3耳鼻喉科",
-              doctors: [
-                {}, // Sun
-                { name: '李冠廷', reg: "已掛到27號" },
-                { name: '吳宛蓉', reg: "已掛到26號" },
-                { name: '吳宛蓉', reg: "已掛到34號" },
-                { name: '李冠廷', start: "08:30開診", reg: "已掛到37號" },
-                {}, {}, // Fri, Sat
-              ]
-            },
-            {
-              time: "午診 14:00~17:00",
-              dept: "1外科",
-              doctors: [
-                {}, // Sunday
-                { name: '林芳瑜', start: "08:30開診", full: true },
-                { name: '林芳瑜', start: "08:30開診", full: true },
-                {},
-                {},
-                {},
-                { name: '林芳瑜', start: "08:30開診" },
-                
-                {}, // Saturday
-              ]
-            },
-            {
-              time: "午診 14:00~17:00",
-              dept: "2內科",
-              doctors: [
-                {}, // Sun
-                { name: "劉璟鋒", reg: "已掛到27號" },
-                { name: "沈至軒", reg: "已掛到26號" },
-                { name: "沈至軒", reg: "已掛到34號" },
-                { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
-                {}, {}, // Fri, Sat
-              ]
-            },
-          {
-              time: "午診 14:00~17:00",
-              dept: "3耳鼻喉科",
-              doctors: [
-                {}, // Sun
-                { name: "劉璟鋒", reg: "已掛到27號" },
-                { name: "沈至軒", reg: "已掛到26號" },
-                { name: "沈至軒", reg: "已掛到34號" },
-                { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
-                {}, {}, // Fri, Sat
-              ]
-            },
-            {
-              time: "晚診 19:00~22:00",
-              dept: "1外科",
-              doctors: [
-                {}, // Sunday
-                { name: "張世倫", start: "08:30開診", full: true },
-                { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
-                { name: "張世倫", start: "08:30開診", full: true },
-                { name: "張世倫", start: "08:30開診" },
-                { name: "張世倫", start: "08:30開診", full: true },
-                {}, // Saturday
-              ]
-            },
-            {
-              time: "晚診 19:00~22:00",
-              dept: "2內科",
-              doctors: [
-                {}, // Sun
-                { name: "劉璟鋒", reg: "已掛到27號" },
-                { name: "沈至軒", reg: "已掛到26號" },
-                { name: "沈至軒", reg: "已掛到34號" },
-                { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
-                {}, {}, // Fri, Sat
-              ]
-            },
-          {
-              time: "晚診 19:00~22:00",
-              dept: "3耳鼻喉科",
-              doctors: [
-                {}, // Sun
-                { name: "劉璟鋒", reg: "已掛到27號" },
-                { name: "沈至軒", reg: "已掛到26號" },
-                { name: "沈至軒", reg: "已掛到34號" },
-                { name: "王俞鈞", start: "08:30開診", reg: "已掛到37號" },
-                {}, {}, // Fri, Sat
-              ]
-            }
-          ]
-        },
-        "2025-06-08": {
-          dates: ["06/08", "06/09", "06/10", "06/11", "06/12", "06/13", "06/14"],
-          days: ["日", "一", "二", "三", "四", "五", "六"],
-          schedule: [
-            {
-              time: "上午 09:00~12:00",
-              dept: "1外科",
-              doctors: [
-                { name: "陳妍戎", reg: "已掛到26號" },
-                {}, {}, {}, {}, {}, {},
-              ]
-            }
-          ]
-        }
-      }
-    };
+  const monthSelect = document.getElementById("monthSelect");
+  const weekSelect = document.getElementById("weekSelect");
+  const scheduleTableDiv = document.getElementById("scheduleTable");
 
-    // 取得所有月份（key）
-    const monthKeys = Object.keys(scheduleDataByMonth);
+  let scheduleDataByMonth = {};
 
-    const monthSelect = document.getElementById("monthSelect");
-    const weekSelect = document.getElementById("weekSelect");
+  // 載入 JSON 班表資料
+  fetch('http://localhost:8080/api/v1/patients/appointment')
+    .then(response => {
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.json();
+    })
+    .then(data => {
+      scheduleDataByMonth = data;
+      populateMonthSelect();
+    })
+    .catch(error => {
+      console.error("載入班表資料失敗：", error);
+      scheduleTableDiv.innerHTML = `<p style="color:red;">無法載入班表資料，請稍後再試。</p>`;
+    });
 
-    // 載入月份選單
-    function loadMonthOptions() {
-      monthSelect.innerHTML = "";
-      monthKeys.forEach(month => {
-        // 顯示格式：2025-06 -> 2025年06月
-        const text = month.replace("-", "年") + "月";
-        monthSelect.innerHTML += `<option value="${month}">${text}</option>`;
-      });
+  function populateMonthSelect() {
+    monthSelect.innerHTML = "";
+    for (const month in scheduleDataByMonth) {
+      const option = document.createElement("option");
+      option.value = month;
+      option.textContent = month;
+      monthSelect.appendChild(option);
     }
 
-    // 根據月份更新週次選單
-    function loadWeekOptions(month) {
-      weekSelect.innerHTML = "";
-      const weeks = scheduleDataByMonth[month];
-      for (const weekKey in weeks) {
-        const dates = weeks[weekKey].dates;
-        const text = `${weekKey.replace(/-/g, "/")} - ${dates[dates.length - 1]}`;
-        // 顯示格式: 2025/06/01 - 06/07
-        weekSelect.innerHTML += `<option value="${weekKey}">${text}</option>`;
-      }
+    if (monthSelect.options.length > 0) {
+      monthSelect.selectedIndex = 0;
+      populateWeekSelect();
+      generateScheduleTable();
+    }
+  }
+
+  function populateWeekSelect() {
+    weekSelect.innerHTML = "";
+    const month = monthSelect.value;
+    const weeks = scheduleDataByMonth[month];
+    for (const week in weeks) {
+      const option = document.createElement("option");
+      const dates = weeks[week].dates;
+      option.value = week;
+      option.textContent = `週次（${dates[0]} ~ ${dates[6]}）`;
+      weekSelect.appendChild(option);
+    }
+    weekSelect.selectedIndex = 0;
+  }
+
+  monthSelect.addEventListener("change", () => {
+    populateWeekSelect();
+    generateScheduleTable();
+  });
+
+  weekSelect.addEventListener("change", generateScheduleTable);
+
+  function generateScheduleTable() {
+    const month = monthSelect.value;
+    const week = weekSelect.value;
+    if (!month || !week) return;
+
+    const { dates, days, schedule } = scheduleDataByMonth[month][week];
+    let html = `<table><thead><tr><th>班別</th><th>科別</th>`;
+
+    for (let i = 0; i < 7; i++) {
+      html += `<th>${dates[i]}<br>${days[i]}</th>`;
     }
 
-    // 渲染排班表，重點：同一班別時間只顯示一次（rowspan）
-    function renderTable(weekKey) {
-      // 先取得選擇月份
-      const month = monthSelect.value;
-      const weekData = scheduleDataByMonth[month][weekKey];
-      if (!weekData) {
-        document.getElementById("scheduleTable").innerHTML = "<p>無排班資料</p>";
-        return;
-      }
-      const { dates, days, schedule } = weekData;
+    html += `</tr></thead><tbody>`;
 
-      // 找出所有不同班別時間集合（保持順序）
-      const uniqueTimes = [];
-      schedule.forEach(slot => {
-        if (!uniqueTimes.includes(slot.time)) {
-          uniqueTimes.push(slot.time);
-        }
-      });
+    for (const row of schedule) {
+      html += `<tr><td class="dept">${row.time}</td><td>${row.dept}</td>`;
 
-      // group schedule by time（同一班別多科）
-      const groupedByTime = {};
-      uniqueTimes.forEach(time => {
-        groupedByTime[time] = schedule.filter(s => s.time === time);
-      });
-
-      let html = `<table><thead><tr>
-        <th>班別</th><th>科別及名稱</th>`;
-      for (let i = 0; i < 7; i++) {
-        html += `<th>${dates[i]}<br>星期${days[i]}</th>`;
-      }
-      html += `</tr></thead><tbody>`;
-
-      // 每個班別時間分組依序顯示
-      for (const time of uniqueTimes) {
-        const depts = groupedByTime[time];
-
-        // rowspan 是該班別有幾個科別(列數)
-        const rowspan = depts.length;
-
-        depts.forEach((slot, idx) => {
-          html += `<tr>`;
-          // 第一列顯示班別時間 (rowspan)
-          if (idx === 0) {
-            html += `<td rowspan="${rowspan}">${time}</td>`;
-          }
-          // 科別名稱
-          html += `<td class="dept">${slot.dept}</td>`;
-
-          // 每日醫生資料
-          for (let i = 0; i < 7; i++) {
-            const doc = slot.doctors[i] || {};
-            if (doc.name) {
-              html += `<td>
-                <span class="doctor-name ${doc.full ? 'full' : ''}">${doc.name}${doc.full ? '（額滿）' : ''}</span><br>`;
-              if (doc.start) html += `<span class="start-time">${doc.start}</span><br>`;
-              if (doc.reg) html += `<span class="reg-info">${doc.reg}</span>`;
-              html += `</td>`;
+      row.doctors.forEach(cell => {
+        if (!cell || Object.keys(cell).length === 0) {
+          html += `<td></td>`;
+        } else {
+          html += `<td>`;
+          html += `<div class="doctor-name">${cell.name || ""}</div>`;
+          if (cell.start) html += `<div class="start-time">${cell.start}</div>`;
+          if (typeof cell.regCount === "number") {
+            if (cell.regCount >= 45) {
+              html += `<div class="full">已額滿</div>`;
             } else {
-              html += `<td></td>`;
+              html += `<div class="reg-info">可掛號</div>`;
             }
           }
+          html += `</td>`;
+        }
+      });
 
-          html += `</tr>`;
-        });
-      }
-
-      html += `</tbody></table>`;
-
-      document.getElementById("scheduleTable").innerHTML = html;
+      html += `</tr>`;
     }
 
-    // 初始化
-    loadMonthOptions();
-    // 預設選擇第一個月份，並載入該月週次
-    monthSelect.value = monthKeys[0];
-    loadWeekOptions(monthSelect.value);
+    html += `</tbody></table>`;
+    scheduleTableDiv.innerHTML = html;
+  }
 
-    // 監聽月份改變事件，更新週次選單並渲染第一週
-    monthSelect.addEventListener("change", function () {
-      loadWeekOptions(this.value);
-      // 選擇新月份的第一個週次
-      const firstWeek = weekSelect.options[0]?.value;
-      if (firstWeek) {
-        weekSelect.value = firstWeek;
-        renderTable(firstWeek);
-      } else {
-        document.getElementById("scheduleTable").innerHTML = "<p>無排班資料</p>";
-      }
-    });
-
-    // 監聽週次改變事件，更新排班表
-    weekSelect.addEventListener("change", function () {
-      renderTable(this.value);
-    });
-
-    // 頁面載入時渲染
-    renderTable(weekSelect.value);
-
-    // 登入驗證
-    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "patient") {
-      alert("請先以病人身份登入才能使用預約服務！");
-      window.location.href = "patient_login.html";
-    }
 
     document.addEventListener("DOMContentLoaded", () => {
       const patientAccount = localStorage.getItem("account");

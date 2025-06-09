@@ -183,6 +183,13 @@
       <label for="phone">手機號碼:</label>
       <input type="text" id="phone" placeholder="輸入手機號碼" required />
 
+      <label for="gender">性別:</label>
+      <select id = "gender" required>
+        <option value = "">請選擇</option>
+        <option value ="男">男</option>
+        <option value ="女">女</option>
+        <option value ="其他">其他</option>
+      </select>
       <fieldset>
         <legend>現居地址:</legend>
         <div class="address-group">
@@ -340,6 +347,7 @@
         }
 
         // 組成要送給後端的資料
+        /*
         const formData = {
           name,
           idNumber,
@@ -371,7 +379,16 @@
           food_allergy_other: foodOtherText,
           medical_history: getCheckedValues("medical_history[]"),
           medical_history_other: historyOtherText
+        };*/
+        const formData = {
+          patient_id: idNumber,
+          patient_name: name,
+          patient_gender: "男",    // 硬填，或加入輸入欄位
+          patient_birth: dob,
+          patient_phone: phone,
+          password: password
         };
+
 
         // 用 fetch 送給後端
         fetch('http://localhost:8080/api/v1/patients/register', {
@@ -386,6 +403,7 @@
             return response.json();
           })
           .then(data => {
+            console.log(data);
             if (data.success) {
               alert("註冊成功！");
               window.location.href = "patient_login.html";

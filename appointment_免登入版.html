@@ -387,7 +387,7 @@
   let scheduleDataByMonth = {};
 
   // 載入 JSON 班表資料
-  fetch('http://localhost:8080/api/v1/patient/appointment')
+  fetch('http://localhost:8080/api/v1/patients/appointment')
     .then(response => {
       if (!response.ok) throw new Error("Network response was not ok");
       return response.json();

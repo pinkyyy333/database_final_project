@@ -3,19 +3,63 @@
 <html lang="zh-Hant">
 <head>
   <script>
-  // ── 新增：檢查登入 Token，若無則回到登入頁
-  const token = localStorage.getItem('manager_token');
-  if (!token) {
-    location.href = 'admin_login.html';
-  }
-</script>
+    // ── 新增：檢查登入 Token，若無則回到登入頁
+    const token = localStorage.getItem('manager_token');
+    if (!token) {
+      location.href = 'admin_login.html';
+    }
+  </script>
   <meta charset="UTF-8" />
   <title>可預約時段設定</title>
 </head>
 <body>
   <h1>可預約時段管理</h1>
   <p>點選日曆 → 顯示當天排班醫師 → 顯示該醫師預約人數（模擬）</p>
-  <div id="calendar">（模擬日曆區塊）</div>
+  <div id="calendar" style="cursor: pointer;">（模擬日曆區塊，點擊以選日期）</div>
   <p>範例顯示：6/7 早診（2 位醫師）→ 點選林小芳 → 目前預約 38/45</p>
+
+  <script>
+    document.getElementById('calendar').addEventListener('click', () => {
+      // 1. 請使用者輸入想查詢的日期（YYYY-MM-DD）
+      const date = prompt('請輸入查詢日期 (YYYY-MM-DD)：', new Date().toISOString().slice(0,10));
+      if (!date) return;
+
+      // 2. 取得當天排班醫師列表（請確認後端已實作此 API）
+      fetch(`http://localhost:8080/api/v1/appointments/available-doctors?date=${date}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.message || '取得醫師列表失敗');
+        // 假設回傳 { success: true, doctors: [{ doctor_id, doctor_name }, …] }
+        const listText = data.doctors
+          .map(d => `${d.doctor_id}. ${d.doctor_name}`)
+          .join('\n');
+        const docId = prompt(`當天排班醫師：\n${listText}\n請輸入醫師 ID：`);
+        if (!docId) return;
+
+        // 3. 取得該醫師當天各時段預約狀況
+        return fetch(
+          `http://localhost:8080/api/v1/appointments/doctor/${docId}/available?date=${date}`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.message || '取得時段資料失敗');
+        // 假設回傳 { success: true, available_slots: [{ slot, count, capacity }, …] }
+        const infoText = data.available_slots
+          .map(s => `${s.slot}：${s.count}/${s.capacity}`)
+          .join('\n');
+        alert(`${date} 預約狀況：\n${infoText}`);
+      })
+      .catch(err => {
+        console.error(err);
+        alert(err.message || '伺服器或網路錯誤');
+      });
+    });
+  </script>
 </body>
 </html>

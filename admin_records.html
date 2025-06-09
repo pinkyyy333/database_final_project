@@ -1,17 +1,176 @@
-
 <!-- admin_records.html -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>預約紀錄總覽</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    .controls { margin: 20px 0; text-align: center; }
+    .controls label { margin: 0 10px; }
+    .controls input, .controls select, .controls button {
+      padding: 6px 10px; font-size: 1rem;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    #message { color: red; text-align: center; margin-top: 10px; }
+  </style>
+  <script>
+    // 後端 API Base URL
+    const API_BASE = "http://localhost:8080/api/v1";
+    // 登入後取得的 JWT
+    const token = localStorage.getItem("manager_token");
+    if (!token) {
+      window.location.href = 'admin_login.html';
+    }
+  </script>
 </head>
 <body>
   <h1>預約紀錄總覽</h1>
-  <p>篩選條件：日期、醫師、診別</p>
-  <table border="1">
-    <tr><th>醫師</th><th>時段</th><th>已預約</th><th>缺席</th></tr>
-    <tr><td>王大明</td><td>6/7 早診</td><td>42</td><td>2</td></tr>
+
+  <div class="controls">
+    <label>日期：
+      <input type="date" id="dateFilter" />
+    </label>
+    <label>醫師：
+      <select id="doctorFilter">
+        <option value="">全部</option>
+      </select>
+    </label>
+    <label>診別：
+      <select id="deptFilter">
+        <option value="">全部</option>
+      </select>
+    </label>
+    <button id="loadRecords">篩選</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>醫師</th>
+        <th>時段</th>
+        <th>已預約</th>
+        <th>缺席</th>
+      </tr>
+    </thead>
+    <tbody id="recordsTable">
+      <tr><td colspan="4">請選擇篩選條件並點擊「篩選」</td></tr>
+    </tbody>
   </table>
+
+  <div id="message"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDoctors();
+      loadDepartments();
+      document.getElementById('loadRecords')
+              .addEventListener('click', () => loadRecords());
+    });
+
+    // 載入醫師清單
+    async function loadDoctors() {
+      try {
+        const res = await fetch(`${API_BASE}/doctors`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        const sel = document.getElementById('doctorFilter');
+        data.doctors.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.doctor_id;
+          opt.textContent = d.doctor_name;
+          sel.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('載入醫師失敗', err);
+      }
+    }
+
+    // 載入科別清單
+    async function loadDepartments() {
+      try {
+        const res = await fetch(`${API_BASE}/departments`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        const sel = document.getElementById('deptFilter');
+        data.departments.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.department_id;
+          opt.textContent = d.department_name;
+          sel.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('載入科別失敗', err);
+      }
+    }
+
+    // 載入並顯示篩選後的紀錄
+    async function loadRecords() {
+      const date       = document.getElementById('dateFilter').value;
+      const doctor_id  = document.getElementById('doctorFilter').value;
+      const department_id = document.getElementById('deptFilter').value;
+      const msg = document.getElementById('message');
+      const tbody = document.getElementById('recordsTable');
+      msg.textContent = '';
+      tbody.innerHTML = '<tr><td colspan="4">載入中…</td></tr>';
+
+      if (!date) {
+        msg.textContent = '請先選擇日期';
+        tbody.innerHTML = '<tr><td colspan="4">請選擇篩選條件並點擊「篩選」</td></tr>';
+        return;
+      }
+
+      // 建立查詢參數
+      const params = new URLSearchParams({ date });
+      if (doctor_id)     params.append('doctor_id', doctor_id);
+      if (department_id) params.append('department_id', department_id);
+
+      try {
+        const res = await fetch(`${API_BASE}/records?${params}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.message || '載入失敗');
+        }
+        renderRecords(data.records);
+      } catch (err) {
+        console.error(err);
+        msg.textContent = err.message || '伺服器或網路錯誤';
+        tbody.innerHTML = '';
+      }
+    }
+
+    // 將資料渲染到表格
+    function renderRecords(list) {
+      const tbody = document.getElementById('recordsTable');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="4">查無結果</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(r => `
+        <tr>
+          <td>${r.doctor_name}</td>
+          <td>${r.slot}</td>
+          <td>${r.booked_count}</td>
+          <td>${r.no_show_count}</td>
+        </tr>
+      `).join('');
+    }
+  </script>
 </body>
 </html>

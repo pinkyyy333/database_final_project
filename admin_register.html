@@ -1,9 +1,10 @@
+<!-- admin_register.html -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>管理者註冊頁面</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>管理者註冊</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -52,11 +53,10 @@
       display: block;
       margin-top: 15px;
       font-weight: bold;
+      color: #333;
     }
     input[type="text"],
-    input[type="password"],
-    input[type="date"],
-    input[type="tel"] {
+    input[type="password"] {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -64,26 +64,6 @@
       border-radius: 5px;
       font-size: 14px;
       box-sizing: border-box;
-    }
-    fieldset {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 15px;
-      margin-top: 20px;
-    }
-    legend {
-      font-weight: bold;
-      color: #2c3e50;
-    }
-    .address-group,
-    .emergency-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .address-group input,
-    .emergency-group input {
-      flex: 1 1 45%;
     }
     button {
       width: 100%;
@@ -101,7 +81,7 @@
     button:hover {
       background-color: #660166;
     }
-    .register-link {
+    .login-link {
       display: block;
       text-align: center;
       margin: 20px auto 0;
@@ -109,10 +89,15 @@
       text-decoration: none;
       font-size: 14px;
     }
-    .register-link:hover {
+    .login-link:hover {
       text-decoration: underline;
     }
   </style>
+
+  <script>
+    // 後端 API Base URL
+    const API_BASE = "http://localhost:8080/api/v1";
+  </script>
 </head>
 <body>
   <header class="navbar">
@@ -132,101 +117,43 @@
   <div class="form-container">
     <h2>管理者註冊</h2>
     <form id="registerForm">
-      <label for="name">姓名</label>
-      <input type="text" id="name" name="name" placeholder="請輸入姓名" required>
+      <label for="username">帳號 (username)</label>
+      <input type="text" id="username" name="username" placeholder="請輸入帳號" required>
 
-      <label for="dob">出生年月日</label>
-      <input type="date" id="dob" name="dob" required>
-
-      <label for="idNumber">帳號</label>
-      <input type="text" id="idNumber" name="managerId" placeholder="請輸入帳號" required>
-
-      <label for="password">密碼</label>
+      <label for="password">密碼 (password)</label>
       <input type="password" id="password" name="password" placeholder="請輸入密碼" required>
-
-      <label for="phone">聯絡電話</label>
-      <input type="tel" id="phone" name="phone" placeholder="請輸入手機號碼" required>
-
-      <fieldset>
-        <legend>地址</legend>
-        <div class="address-group">
-          <input type="text" id="city" name="city" placeholder="縣市" required>
-          <input type="text" id="district" name="district" placeholder="行政區" required>
-          <input type="text" id="street" name="street" placeholder="路/街" required>
-          <input type="text" id="lane" name="lane" placeholder="段/巷/弄" required>
-          <input type="text" id="number" name="number" placeholder="門牌號碼" required>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>緊急聯絡人</legend>
-        <div class="emergency-group">
-          <input type="text" id="emergency_name" name="emergency_name" placeholder="姓名" required>
-          <input type="tel" id="emergency_phone" name="emergency_phone" placeholder="手機號碼" required>
-          <input type="text" id="emergency_relation" name="emergency_relation" placeholder="關係" required>
-        </div>
-      </fieldset>
 
       <button type="submit">註冊</button>
     </form>
-    <a class="register-link" href="admin_login.html">已有帳號？立即登入</a>
+    <a class="login-link" href="admin_login.html">已有帳號？立即登入</a>
   </div>
+
   <script>
-    document.getElementById("registerForm").addEventListener("submit", function(e) {
+    document.getElementById("registerForm").addEventListener("submit", async function(e) {
       e.preventDefault();
 
-      const formData = {
-        name: this.name.value.trim(),
-        dob: this.dob.value,
-        managerId: this.idNumber.value.trim(),
-        password: this.password.value,
-        phone: this.phone.value.trim(),
-        address: {
-          city: this.city.value.trim(),
-          district: this.district.value.trim(),
-          street: this.street.value.trim(),
-          lane: this.lane.value.trim(),
-          number: this.number.value.trim()
-        },
-        emergency_contact: {
-          name: this.emergency_name.value.trim(),
-          phone: this.emergency_phone.value.trim(),
-          relation: this.emergency_relation.value.trim()
-        }
-      };
+      const username = this.username.value.trim();
+      const password = this.password.value;
 
-      // 基本前端驗證
-      if (!formData.name || !formData.dob || !formData.managerId || !formData.password || !formData.phone) {
-        alert("請填寫所有必填欄位！");
-        return;
-      }
-      // 你也可以加更多驗證...
-
-      fetch("http://localhost:8080/api/v1/manager/doctors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.managerId,
-          password: formData.password
-          })
-      })
-      .then(res => {
+      try {
+        const res = await fetch(`${API_BASE}/manager/doctors`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
         if (!res.ok) throw new Error("伺服器錯誤");
-        return res.json();
-      })
-      .then(data => {
+        const data = await res.json();
         if (data.success) {
           alert("註冊成功！請重新登入");
           window.location.href = "admin_login.html";
         } else {
           alert(data.message || "註冊失敗");
         }
-      })
-      .catch(err => {
-        alert("網路錯誤或伺服器無回應，請稍後再試");
+      } catch (err) {
         console.error(err);
-      });
+        alert("網路錯誤或伺服器無回應，請稍後再試");
+      }
     });
-    </script>
+  </script>
 </body>
 </html>

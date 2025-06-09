@@ -3,14 +3,106 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>預約流程管理</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 8px 0; }
+    button { margin-left: 12px; }
+    #message { color: red; text-align: center; margin-bottom: 12px; }
+  </style>
+  <script>
+    // 檢查登入 Token，若無則回到登入頁
+    const token = localStorage.getItem('manager_token');
+    if (!token) {
+      window.location.href = 'admin_login.html';
+    }
+  </script>
 </head>
 <body>
   <h1>預約流程管理</h1>
   <p>顯示預約號、病患姓名、狀態（正常 / 缺席 / 取消）</p>
-  <ul>
-    <li>王小明 - 第12號 - <button>取消</button></li>
-    <li>李大華 - 第13號 - <button>缺席</button></li>
+  <div id="message"></div>
+  <ul id="flowList">
+    <li>載入中…</li>
   </ul>
+
+  <script>
+    const flowList = document.getElementById('flowList');
+    const message  = document.getElementById('message');
+
+    // 取得今天日期 YYYY-MM-DD
+    const today = new Date().toISOString().slice(0,10);
+
+    // 載入當日預約流程
+    async function loadFlow() {
+      message.textContent = '';
+      flowList.innerHTML = '<li>載入中…</li>';
+      try {
+        const res = await fetch(`http://localhost:8080/api/v1/manager/appointments?date=${today}`, {
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.message || '載入失敗');
+        }
+        renderFlow(data.appointments);
+      } catch (err) {
+        console.error(err);
+        message.textContent = err.message || '伺服器或網路錯誤';
+        flowList.innerHTML = '';
+      }
+    }
+
+    // 將預約列表渲染成流程
+    function renderFlow(list) {
+      if (!list.length) {
+        flowList.innerHTML = '<li>今日無預約</li>';
+        return;
+      }
+      flowList.innerHTML = list.map((a, idx) => {
+        const seq = idx + 1;
+        return `
+          <li>
+            ${a.patient_name} - 第${seq}號 - <strong>${a.status}</strong>
+            <button onclick="updateStatus(${a.appointment_id}, 'cancelled')">取消</button>
+            <button onclick="updateStatus(${a.appointment_id}, 'no_show')">標記缺席</button>
+          </li>`;
+      }).join('');
+    }
+
+    // 更新單一預約狀態
+    async function updateStatus(id, status) {
+      message.textContent = '';
+      try {
+        const res = await fetch(`http://localhost:8080/api/v1/manager/appointments/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status })
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.message || '操作失敗');
+        }
+        loadFlow();
+      } catch (err) {
+        console.error(err);
+        message.textContent = err.message || '操作失敗';
+      }
+    }
+
+    // 初始載入
+    window.addEventListener('DOMContentLoaded', loadFlow);
+  </script>
 </body>
 </html>

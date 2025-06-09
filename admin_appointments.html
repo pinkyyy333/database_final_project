@@ -14,6 +14,13 @@
     th { background: #f0f0f0; }
     button.action { padding: 4px 8px; margin: 0 2px; }
   </style>
+  <script>
+    // ── 檢查登入 Token，若無則回到登入頁
+    const token = localStorage.getItem('manager_token');
+    if (!token) {
+      window.location.href = 'admin_login.html';
+    }
+  </script>
 </head>
 <body>
   <h1>全院預約清單</h1>
@@ -22,7 +29,7 @@
     <input type="date" id="dateFilter" />
     <button id="loadApps">載入預約</button>
   </div>
-  <div id="message"></div>
+  <div id="message" style="color: red; text-align: center;"></div>
   <table>
     <thead>
       <tr>
@@ -41,62 +48,83 @@
   </table>
   <script>
     const dateFilter = document.getElementById('dateFilter');
-    const loadBtn = document.getElementById('loadApps');
-    const tableBody = document.getElementById('appsTable');
-    const message = document.getElementById('message');
+    const loadBtn    = document.getElementById('loadApps');
+    const tableBody  = document.getElementById('appsTable');
+    const message    = document.getElementById('message');
 
     async function loadApps(date) {
+      message.textContent = '';
       if (!date) {
-        message.textContent = '請先選擇日期'; return;
+        message.textContent = '請先選擇日期';
+        return;
       }
       try {
-        const res = await fetch(`/api/v1/manager/appointments?date=${date}`);
+        const res = await fetch(`http://localhost:8080/api/v1/manager/appointments?date=${date}`, {
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
+        if (!data.success) {
+          message.textContent = data.message || '載入失敗';
+          return;
+        }
         renderTable(data.appointments);
       } catch (err) {
-        message.textContent = '載入失敗，請稍後再試';
         console.error(err);
+        message.textContent = '載入失敗，請稍後再試';
       }
     }
 
     function renderTable(list) {
-    if (!list.length) {
-      tableBody.innerHTML = '<tr><td colspan="7">該日期無預約</td></tr>';
-      return;
-    }
-    tableBody.innerHTML = list.map(a => {
-      // 將 ISO 時間字串分拆為日期 + 時間
-      const dt = new Date(a.appointment_time);
-      const dateStr = dt.toLocaleDateString(); // 例如 "2025/6/11"
-      const timeStr = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // 例如 "10:30"
+      if (!list.length) {
+        tableBody.innerHTML = '<tr><td colspan="7">該日期無預約</td></tr>';
+        return;
+      }
+      tableBody.innerHTML = list.map(a => {
+        // ISO 時間拆成日期 + 時間
+        const dt      = new Date(a.appointment_time);
+        const dateStr = dt.toLocaleDateString(); 
+        const timeStr = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      return `
-        <tr>
-          <td>${a.patient_id}</td>
-          <td>${a.doctor_id}</td>
-          <td>${a.department_id}</td>
-          <td>${dateStr}</td>
-          <td>${timeStr}</td>
-          <td>${a.status}</td>
-          <td>
-            <button class="action" onclick="updateStatus(${a.appointment_id}, 'cancelled')">取消</button>
-            <button class="action" onclick="updateStatus(${a.appointment_id}, 'no_show')">標記未出現</button>
-          </td>
-        </tr>`;
-    }).join('');
-  }
+        return `
+          <tr>
+            <td>${a.patient_name}</td>
+            <td>${a.doctor_name}</td>
+            <td>${a.department_name}</td>
+            <td>${dateStr}</td>
+            <td>${timeStr}</td>
+            <td>${a.status}</td>
+            <td>
+              <button class="action" onclick="updateStatus(${a.appointment_id}, 'cancelled')">取消</button>
+              <button class="action" onclick="updateStatus(${a.appointment_id}, 'no_show')">標記未出現</button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
 
     async function updateStatus(id, status) {
+      message.textContent = '';
       try {
-        const res = await fetch(`/api/v1/manager/appointments/${id}`, {
+        const res = await fetch(`http://localhost:8080/api/v1/manager/appointments/${id}`, {
           method: 'PATCH',
-          headers: {'Content-Type':'application/json'},
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ status })
         });
         if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (!data.success) {
+          message.textContent = data.message || '操作失敗';
+          return;
+        }
         loadApps(dateFilter.value);
-      } catch {
+      } catch (err) {
+        console.error(err);
         message.textContent = '操作失敗';
       }
     }

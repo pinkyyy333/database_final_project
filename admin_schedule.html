@@ -3,24 +3,167 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>醫師排班管理</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    label { margin-right: 10px; }
+    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin: 20px 0; }
+    .day { border: 1px solid #ccc; padding: 8px; border-radius: 4px; }
+    .day h4 { margin: 0 0 8px; font-size: 0.9rem; }
+    .day label { display: block; font-size: 0.8rem; }
+    button { padding: 8px 16px; background: #800080; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #660166; }
+    #message { color: red; text-align: center; margin-top: 10px; }
+  </style>
+  <script>
+    const API_BASE = "http://localhost:8080/api/v1";
+    const token    = localStorage.getItem("manager_token");
+    if (!token) {
+      window.location.href = 'admin_login.html';
+    }
+  </script>
 </head>
 <body>
   <h1>醫師排班管理</h1>
-  <label>選擇醫師: <select id="doctorSelect"></select></label>
-  <label>選擇月份: <input type="month" id="monthSelect"></label>
+  <label>選擇醫師：
+    <select id="doctorSelect"></select>
+  </label>
+  <label>選擇月份：
+    <input type="month" id="monthSelect"/>
+  </label>
+  <button id="loadBtn">載入排班</button>
+  <div id="message"></div>
   <div id="calendar"></div>
-  <button onclick="saveSchedule()">儲存排班</button>
+  <button id="saveBtn">儲存排班</button>
 
   <script>
-    const doctorList = ['王大明', '林小芳'];
-    doctorList.forEach(name => {
-      const opt = document.createElement("option");
-      opt.textContent = name;
-      document.getElementById("doctorSelect").appendChild(opt);
-    });
+    const doctorSelect = document.getElementById('doctorSelect');
+    const monthSelect  = document.getElementById('monthSelect');
+    const loadBtn      = document.getElementById('loadBtn');
+    const saveBtn      = document.getElementById('saveBtn');
+    const calendarEl   = document.getElementById('calendar');
+    const messageEl    = document.getElementById('message');
 
-    function saveSchedule() { alert("排班儲存成功！（模擬）"); }
+    let currentSchedule = []; // [{ date, morning, afternoon }]
+
+    // 取得醫師列表
+    async function loadDoctors() {
+      try {
+        const res = await fetch(`${API_BASE}/doctors`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          data.doctors.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.doctor_id;
+            opt.textContent = d.doctor_name;
+            doctorSelect.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 載入既有排班
+    async function loadSchedule() {
+      messageEl.textContent = '';
+      calendarEl.innerHTML = '';
+      const doctor_id = doctorSelect.value;
+      const month     = monthSelect.value;
+      if (!doctor_id || !month) {
+        messageEl.textContent = '請先選擇醫師與月份';
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/schedules?doctor_id=${doctor_id}&month=${month}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentSchedule = data.schedule;
+        } else {
+          currentSchedule = [];
+        }
+      } catch {
+        currentSchedule = [];
+      }
+      renderCalendar(month, currentSchedule);
+    }
+
+    // 產生月份所有日期並渲染
+    function renderCalendar(month, schedule) {
+      calendarEl.innerHTML = '';
+      const [year, mon] = month.split('-').map(Number);
+      const daysInMonth = new Date(year, mon, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = `${month}-${String(d).padStart(2,'0')}`;
+        const entry = schedule.find(e => e.date === date) || { date, morning: false, afternoon: false };
+        const dayEl = document.createElement('div');
+        dayEl.className = 'day';
+        dayEl.innerHTML = `
+          <h4>${d}日</h4>
+          <label><input type="checkbox" data-date="${date}" data-shift="morning" ${entry.morning?'checked':''}/> 早診</label>
+          <label><input type="checkbox" data-date="${date}" data-shift="afternoon" ${entry.afternoon?'checked':''}/> 午診</label>
+        `;
+        calendarEl.appendChild(dayEl);
+      }
+    }
+
+    // 收集輸入並儲存
+    async function saveSchedule() {
+      messageEl.textContent = '';
+      const doctor_id = doctorSelect.value;
+      const month     = monthSelect.value;
+      if (!doctor_id || !month) {
+        messageEl.textContent = '請先選擇醫師與月份';
+        return;
+      }
+      // 構建 schedule 陣列
+      const items = [];
+      calendarEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        const date = cb.dataset.date;
+        let entry = items.find(e => e.date === date);
+        if (!entry) {
+          entry = { date, morning: false, afternoon: false };
+          items.push(entry);
+        }
+        entry[cb.dataset.shift] = cb.checked;
+      });
+      try {
+        const res = await fetch(`${API_BASE}/schedules`, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            doctor_id: Number(doctor_id),
+            month,
+            schedule: items
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('排班已儲存');
+        } else {
+          throw new Error(data.message);
+        }
+      } catch (err) {
+        console.error(err);
+        messageEl.textContent = '儲存失敗，請稍後再試';
+      }
+    }
+
+    // 初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDoctors();
+      loadBtn.addEventListener('click', loadSchedule);
+      saveBtn.addEventListener('click', saveSchedule);
+    });
   </script>
 </body>
 </html>

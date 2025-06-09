@@ -3,13 +3,24 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>每日報表</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     h1 { color: #333; }
     ul { list-style-type: none; padding: 0; }
     li { padding: 8px 0; font-size: 18px; }
+    #message { color: red; margin-top: 10px; }
   </style>
+  <script>
+    // 後端 API Base URL
+    const API_BASE = "http://localhost:8080/api/v1";
+    // 登入後取得的 JWT
+    const token = localStorage.getItem("manager_token");
+    if (!token) {
+      window.location.href = 'admin_login.html';
+    }
+  </script>
 </head>
 <body>
   <h1>每日報表</h1>
@@ -18,25 +29,41 @@
     <li>缺席率：<span id="noShowRate">載入中...</span></li>
     <li>醫師利用率：<span id="doctorUtilization">載入中...</span></li>
   </ul>
+  <div id="message"></div>
 
   <script>
-    // 模擬從後端取得資料（假資料）
-    const reportData = {
-      totalAppointments: 285,
-      noShowCount: 16,
-      attendedCount: 269,
-      maxAvailableSlots: 306 // 所有醫師當日總可看診人數（例如：內外耳三科各2人 * 每人2時段 * 45人）
-    };
+    async function loadReport() {
+      document.getElementById('message').textContent = '';
+      try {
+        const res = await fetch(`${API_BASE}/manager/reports`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.message || '載入失敗');
+        }
+        const rpt = data.report;
+        // 更新畫面
+        document.getElementById('totalAppointments').textContent = rpt.total_appointments;
+        const noShowRate = ((rpt.no_show_count / rpt.total_appointments) * 100).toFixed(1) + '%';
+        document.getElementById('noShowRate').textContent = noShowRate;
+        const doctorUtilization = ((rpt.attended_count / rpt.max_available_slots) * 100).toFixed(1) + '%';
+        document.getElementById('doctorUtilization').textContent = doctorUtilization;
+      } catch (err) {
+        console.error(err);
+        document.getElementById('message').textContent = err.message || '伺服器或網路錯誤';
+        // 顯示「-」作為 fallback
+        document.getElementById('totalAppointments').textContent = '-';
+        document.getElementById('noShowRate').textContent = '-';
+        document.getElementById('doctorUtilization').textContent = '-';
+      }
+    }
 
-    // 計算動態數據
-    const totalAppointments = reportData.totalAppointments;
-    const noShowRate = ((reportData.noShowCount / totalAppointments) * 100).toFixed(1) + '%';
-    const doctorUtilization = ((reportData.attendedCount / reportData.maxAvailableSlots) * 100).toFixed(1) + '%';
-
-    // 顯示在畫面上
-    document.getElementById('totalAppointments').textContent = totalAppointments;
-    document.getElementById('noShowRate').textContent = noShowRate;
-    document.getElementById('doctorUtilization').textContent = doctorUtilization;
+    window.addEventListener('DOMContentLoaded', loadReport);
   </script>
 </body>
 </html>

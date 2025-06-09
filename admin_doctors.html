@@ -1,8 +1,9 @@
-<!-- admin_doctors.html -->
+<!-- admin_doctors.html --> 
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>醫師資料管理</title>
 </head>
 <body>
@@ -10,32 +11,163 @@
   <button onclick="addDoctor()">新增醫師</button>
   <table border="1">
     <thead>
-      <tr><th>ID</th><th>姓名</th><th>科別</th><th>性別</th><th>學歷</th><th>雇用日</th><th>電話</th><th>操作</th></tr>
+      <tr>
+        <th>ID</th>
+        <th>姓名</th>
+        <th>科別</th>
+        <th>性別</th>
+        <th>學歷</th>
+        <th>雇用日</th>
+        <th>電話</th>
+        <th>操作</th>
+      </tr>
     </thead>
-    <tbody id="doctorTable"></tbody>
+    <tbody id="doctorTable">
+      <tr><td colspan="8">載入中…</td></tr>
+    </tbody>
   </table>
 
   <script>
-    const doctors = [
-      {id: '10001', name: '王大明', dept: '內科', gender: '男', edu: '台大醫學', hireDate: '2022-01-01', phone: '0912345678'},
-      {id: '10002', name: '林小芳', dept: '外科', gender: '女', edu: '陽明大學', hireDate: '2023-03-15', phone: '0987654321'}
-    ];
+    // 檢查登入 Token，若無則跳回登入頁
+    const token = localStorage.getItem('manager_token');
+    if (!token) {
+      window.location.href = 'admin_login.html';
+    }
 
-    function loadDoctors() {
-      const tbody = document.getElementById("doctorTable");
+    let doctors = [];
+
+    // 取得所有醫師
+    async function loadDoctors() {
+      try {
+        const res = await fetch('http://localhost:8080/api/v1/doctors', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        doctors = data.doctors;
+        renderTable();
+      } catch (err) {
+        document.getElementById('doctorTable').innerHTML =
+          '<tr><td colspan="8">載入醫師列表失敗</td></tr>';
+        console.error(err);
+      }
+    }
+
+    // 將 doctors 陣列渲染到表格
+    function renderTable() {
+      const tbody = document.getElementById('doctorTable');
       tbody.innerHTML = '';
+      if (doctors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8">目前無醫師資料</td></tr>';
+        return;
+      }
       doctors.forEach((d, i) => {
-        tbody.innerHTML += `<tr>
-          <td>${d.id}</td><td>${d.name}</td><td>${d.dept}</td><td>${d.gender}</td>
-          <td>${d.edu}</td><td>${d.hireDate}</td><td>${d.phone}</td>
-          <td><button onclick="editDoctor(${i})">編輯</button><button onclick="deleteDoctor(${i})">刪除</button></td>
-        </tr>`;
+        tbody.innerHTML += `
+          <tr>
+            <td>${d.doctor_id}</td>
+            <td>${d.doctor_name}</td>
+            <td>${d.dept_id}</td>
+            <td>${d.gender||''}</td>
+            <td>${d.edu||''}</td>
+            <td>${d.hire_date||''}</td>
+            <td>${d.phone||''}</td>
+            <td>
+              <button onclick="editDoctor(${i})">編輯</button>
+              <button onclick="deleteDoctor(${i})">刪除</button>
+            </td>
+          </tr>
+        `;
       });
     }
-    function addDoctor() { alert("彈出新增表單（模擬）"); }
-    function editDoctor(i) { alert("彈出編輯醫師「" + doctors[i].name + "」表單（模擬）"); }
-    function deleteDoctor(i) { doctors.splice(i, 1); loadDoctors(); }
-    loadDoctors();
+
+    // 新增醫師
+    async function addDoctor() {
+      const doctor_name = prompt('請輸入醫師姓名：');
+      if (!doctor_name) return;
+      const dept_id = prompt('請輸入科別 ID：');
+      if (!dept_id) return;
+      const doctor_info = prompt('請輸入醫師說明 (可留空)：', '');
+      try {
+        const res = await fetch('http://localhost:8080/api/v1/doctors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            doctor_name,
+            dept_id: Number(dept_id),
+            doctor_info
+          })
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        loadDoctors();
+      } catch (err) {
+        alert('新增失敗');
+        console.error(err);
+      }
+    }
+
+    // 編輯醫師
+    async function editDoctor(i) {
+      const d = doctors[i];
+      const doctor_name = prompt('醫師姓名：', d.doctor_name);
+      if (doctor_name === null) return;
+      const dept_id = prompt('科別 ID：', d.dept_id);
+      if (dept_id === null) return;
+      const doctor_info = prompt('醫師說明：', d.doctor_info || '');
+      if (doctor_info === null) return;
+      try {
+        const res = await fetch(`http://localhost:8080/api/v1/doctors/${d.doctor_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            doctor_name,
+            dept_id: Number(dept_id),
+            doctor_info
+          })
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        loadDoctors();
+      } catch (err) {
+        alert('更新失敗');
+        console.error(err);
+      }
+    }
+
+    // 刪除醫師
+    async function deleteDoctor(i) {
+      const d = doctors[i];
+      if (!confirm(`確定要刪除醫師 ${d.doctor_name}？`)) return;
+      try {
+        const res = await fetch(`http://localhost:8080/api/v1/doctors/${d.doctor_id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        loadDoctors();
+      } catch (err) {
+        alert('刪除失敗');
+        console.error(err);
+      }
+    }
+
+    // 頁面載入時自動呼叫
+    window.addEventListener('DOMContentLoaded', loadDoctors);
   </script>
 </body>
 </html>

@@ -1,12 +1,7 @@
+<!-- admin_login.html -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <script>
-  // 後端 API Base URL
-  const API_BASE = "http://localhost:8080/api/v1";
-  // 登入後取得的 JWT
-  const token = localStorage.getItem("token");
-  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>管理者登入系統</title>
@@ -96,6 +91,7 @@
     .register-link:hover {
       text-decoration: underline;
     }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -124,42 +120,37 @@
     </form>
     <a class="register-link" href="admin_register.html">沒有帳號？立即註冊</a>
     <p id="errorMessage" class="hidden" style="color:red; text-align:center;">帳號或密碼錯誤！</p>
-    <style>
-      .hidden { display: none; }
-    </style>
   </div>
 
   <script>
-    document.getElementById("adminLoginForm").addEventListener("submit", function(e) {
+    const API_BASE = "http://localhost:8080/api/v1";
+
+    document.getElementById("adminLoginForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const username = this.username.value.trim();
       const password = this.password.value;
 
-      fetch('http://localhost:8080/api/v1/manager/login', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({username, password})
-        
-      })
-      .then(res => {
+      try {
+        const res = await fetch(`${API_BASE}/manager/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
         if (!res.ok) throw new Error('伺服器錯誤');
-        return res.json();
-      })
-      .then(data => {
+        const data = await res.json();
         if (data.success) {
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('role', 'admin');
+          if (data.token) {
+            localStorage.setItem('manager_token', data.token);
+          }
           window.location.href = 'admin_dashboard.html';
         } else {
-          const errElem = document.getElementById('errorMessage');
-          errElem.classList.remove('hidden');
+          document.getElementById('errorMessage').classList.remove('hidden');
         }
-      })
-      .catch(err => {
+      } catch (err) {
         alert('系統錯誤，請稍後再試');
         console.error(err);
-      });
+      }
     });
-    </script>
+  </script>
 </body>
 </html>

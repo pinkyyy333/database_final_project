@@ -1,7 +1,9 @@
+<!-- admin_substitution.html -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>管理端 - 醫師替代管理</title>
   <style>
     body {
@@ -48,8 +50,15 @@
       display: none;
     }
     .message.success { background-color: #e6ffed; color: #2c662d; }
-    .message.error { background-color: #ffe6e6; color: #992d2d; }
+    .message.error   { background-color: #ffe6e6; color: #992d2d; }
   </style>
+  <script>
+    const API_BASE = "http://localhost:8080/api/v1";
+    const token    = localStorage.getItem("manager_token");
+    if (!token) {
+      window.location.href = 'admin_login.html';
+    }
+  </script>
 </head>
 <body>
   <div class="container">
@@ -81,96 +90,121 @@
   </div>
 
   <script>
-    const absentSelect = document.getElementById('absentDoc');
+    const absentSelect     = document.getElementById('absentDoc');
     const substituteSelect = document.getElementById('substituteDoc');
-    const impactedList = document.getElementById('impactedList');
-    const assignBtn = document.getElementById('assignBtn');
-    const successMsg = document.getElementById('successMsg');
-    const errorMsg = document.getElementById('errorMsg');
+    const impactedList      = document.getElementById('impactedList');
+    const assignBtn        = document.getElementById('assignBtn');
+    const successMsg       = document.getElementById('successMsg');
+    const errorMsg         = document.getElementById('errorMsg');
 
     let doctors = [];
-    let impactedPatients = [];
+    let today   = new Date().toISOString().slice(0,10);
 
     // 1. 載入所有醫師列表
-    fetch('/api/doctors')
-      .then(res => res.json())
-      .then(data => {
-        doctors = data;
-        data.forEach(doc => {
-          const opt1 = new Option(doc.name, doc.doctor_id);
-          const opt2 = new Option(doc.name, doc.doctor_id);
+    async function loadDoctors() {
+      try {
+        const res = await fetch(`${API_BASE}/doctors`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('載入醫師失敗');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        doctors = data.doctors;
+        doctors.forEach(d => {
+          const opt1 = new Option(d.doctor_name, d.doctor_id);
+          const opt2 = new Option(d.doctor_name, d.doctor_id);
           absentSelect.add(opt1);
           substituteSelect.add(opt2);
         });
-      })
-      .catch(err => console.error('醫師列表載入失敗', err));
+      } catch (err) {
+        console.error(err);
+        absentSelect.innerHTML = '<option value="">(載入失敗)</option>';
+      }
+    }
 
-    // 當選擇請假醫師時，載入受影響病患
-    absentSelect.addEventListener('change', () => {
+    // 2. 當選擇請假醫師時，載入受影響病患
+    absentSelect.addEventListener('change', async () => {
       const doctorId = absentSelect.value;
       substituteSelect.disabled = !doctorId;
-      assignBtn.disabled = true;
-      impactedList.innerHTML = '<li>載入中...</li>';
-      successMsg.style.display = 'none'; errorMsg.style.display = 'none';
+      assignBtn.disabled        = true;
+      successMsg.style.display  = 'none';
+      errorMsg.style.display    = 'none';
+      impactedList.innerHTML    = '<li>載入中…</li>';
 
       if (!doctorId) {
         impactedList.innerHTML = '<li>請先選擇請假醫師</li>';
         return;
       }
-      // 2. 取得該醫師當日預約病患
-      const today = new Date().toISOString().slice(0,10);
-      fetch(`/api/appointments?doctorId=${doctorId}&date=${today}`)
-        .then(res => res.json())
-        .then(data => {
-          impactedPatients = data;
-          if (data.length === 0) {
-            impactedList.innerHTML = '<li>無受影響病患</li>';
-          } else {
-            impactedList.innerHTML = '';
-            data.forEach(p => {
-              const li = document.createElement('li');
-              li.textContent = `${p.patient_name} - ${p.appointment_time}`;
-              impactedList.appendChild(li);
-            });
-            assignBtn.disabled = false;
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/appointments/doctor/${doctorId}?date=${today}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
           }
-        })
-        .catch(err => {
-          console.error('載入病患失敗', err);
-          impactedList.innerHTML = '<li>無法載入受影響病患</li>';
-        });
+        );
+        if (!res.ok) throw new Error('載入失敗');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const list = data.appointments;
+        if (list.length === 0) {
+          impactedList.innerHTML = '<li>無受影響病患</li>';
+        } else {
+          impactedList.innerHTML = '';
+          list.forEach(a => {
+            const li = document.createElement('li');
+            const time = new Date(a.appointment_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            li.textContent = `${a.patient_name} - ${time}`;
+            impactedList.appendChild(li);
+          });
+          assignBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error(err);
+        impactedList.innerHTML = '<li>無法載入受影響病患</li>';
+      }
     });
 
-    // 指派替代並通知病患
-    assignBtn.addEventListener('click', () => {
-      const absentId = absentSelect.value;
+    // 3. 指派替代並通知病患
+    assignBtn.addEventListener('click', async () => {
+      const absentId     = absentSelect.value;
       const substituteId = substituteSelect.value;
-      successMsg.style.display = 'none'; errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+      errorMsg.style.display   = 'none';
+
       if (!absentId || !substituteId) {
         errorMsg.textContent = '請選擇請假及替代醫師';
         errorMsg.style.display = 'block';
         return;
       }
-      // 3. 呼叫後端進行替代與通知
-      fetch(`/api/substitutions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ absentDoctorId: absentId, substituteDoctorId: substituteId, date: today })
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('指派失敗');
-          return res.json();
-        })
-        .then(resp => {
-          successMsg.textContent = '已指派替代並通知所有受影響病患';
-          successMsg.style.display = 'block';
-        })
-        .catch(err => {
-          console.error(err);
-          errorMsg.textContent = '指派或通知過程中發生錯誤';
-          errorMsg.style.display = 'block';
+
+      try {
+        const res = await fetch(`${API_BASE}/substitutions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            absent_doctor_id:     Number(absentId),
+            substitute_doctor_id: Number(substituteId),
+            date:                 today
+          })
         });
+        if (!res.ok) throw new Error('指派失敗');
+        const resp = await res.json();
+        if (!resp.success) throw new Error(resp.message);
+
+        successMsg.textContent = '已指派替代並通知所有受影響病患';
+        successMsg.style.display = 'block';
+      } catch (err) {
+        console.error(err);
+        errorMsg.textContent = err.message || '指派或通知過程中發生錯誤';
+        errorMsg.style.display = 'block';
+      }
     });
+
+    window.addEventListener('DOMContentLoaded', loadDoctors);
   </script>
 </body>
 </html>

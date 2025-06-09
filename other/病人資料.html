@@ -88,50 +88,57 @@
   </div>
 
   <script>
-    // 檢查登入狀態
     const account = localStorage.getItem("account");
     if (!account) {
       alert("請先以病人身份登入才能查看個人資料！");
-      window.location.href = "patient_login.html";  // 導向登入頁
+      window.location.href = "patient_login.html";
     }
 
-    // 假資料範例，可改為 fetch 後端資料
-    const patientData = {
-      account: account,
-      name: "王小明",
-      birthdate: "1990-05-20",
-      phone: "0912345678",
-      current_address: "台北市中山區南京東路三段100號",
-      registered_address: "新北市板橋區文化路二段200號",
-      emergency_contact: "王媽媽 0933222111",
-      allergy_drugs: "青黴素",
-      allergy_foods: "花生",
-      medical_history: "氣喘、鼻過敏"
-    };
-
-    const appointmentRecords = [
-      { date: "2025-06-10", time: "9:00-12:00", dept: "內科", doctor: "張育誠" },
-      { date: "2025-06-15", time: "14:00-17:00", dept: "耳鼻喉科", doctor: "吳宛蓉" }
-    ];
-
-    // 顯示個人資料
-    for (const key in patientData) {
-      const element = document.getElementById(key);
-      if (element) element.textContent = patientData[key];
+    function formatAddress(city, district, street, lane, number) {
+      return [city, district, street, lane, number].filter(Boolean).join('');
     }
 
-    // 顯示預約紀錄
-    const tbody = document.getElementById("appointments");
-    appointmentRecords.forEach(record => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${record.date}</td>
-        <td>${record.time}</td>
-        <td>${record.dept}</td>
-        <td>${record.doctor}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+    fetch(`http://localhost:8080/api/v1/patients/病人資料?patientId=${encodeURIComponent(account)}`)
+      .then(response => {
+        if (!response.ok) throw new Error("無法取得病人資料");
+        return response.json();
+      })
+      .then(data => {
+        // 病人資料填入
+        document.getElementById("account").textContent = data.Patient_ID || '';
+        document.getElementById("name").textContent = data.Patient_Name || '';
+        document.getElementById("birthdate").textContent = data.Patient_Birth || '';
+        document.getElementById("phone").textContent = data.Patient_Phone || '';
+        document.getElementById("current_address").textContent =
+          formatAddress(data.Current_City, data.Current_District, data.Current_Street, data.Current_Lane, data.Current_Number);
+        document.getElementById("registered_address").textContent =
+          formatAddress(data.Permanent_City, data.Permanent_District, data.Permanent_Street, data.Permanent_Lane, data.Permanent_Number);
+        document.getElementById("emergency_contact").textContent =
+          `${data.Emergency_Name || ''} ${data.Emergency_Phone || ''} (${data.Emergency_Relation || ''})`;
+        document.getElementById("allergy_drugs").textContent = data.drug_allergy || "無";
+        document.getElementById("allergy_foods").textContent = data.food_allergy || "無";
+        document.getElementById("medical_history").textContent = data.medical_history || "無";
+
+        // 預約紀錄填入
+        const tbody = document.getElementById("appointments");
+        if (Array.isArray(data.appointments)) {
+          data.appointments.forEach(record => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${record.date || ''}</td>
+              <td>${record.time || ''}</td>
+              <td>${record.dept || ''}</td>
+              <td>${record.doctor || ''}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      })
+      .catch(error => {
+        console.error("錯誤：", error);
+        alert("載入病人資料時發生錯誤！");
+      });
   </script>
+
 </body>
 </html>

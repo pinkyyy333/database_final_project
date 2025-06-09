@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 	"time"
@@ -11,16 +12,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/datatypes"
 )
 
-// 用於綁定註冊/登入請求
+// PatientRequest 綁定註冊請求，包含前端所有欄位
 type PatientRequest struct {
-	PatientID     string `json:"patient_id"`
-	PatientName   string `json:"patient_name"`
-	PatientGender string `json:"patient_gender"`
-	PatientBirth  string `json:"patient_birth"`
-	PatientPhone  string `json:"patient_phone"`
-	Password      string `json:"password"`
+	PatientID         string   `json:"patient_id"`
+	PatientName       string   `json:"patient_name"`
+	PatientGender     string   `json:"patient_gender"`
+	PatientBirth      string   `json:"patient_birth"`
+	PatientPhone      string   `json:"patient_phone"`
+	Password          string   `json:"password"`
+	Address           string   `json:"address"`
+	EmergencyName     string   `json:"emergency_name"`
+	EmergencyPhone    string   `json:"emergency_phone"`
+	EmergencyRelation string   `json:"emergency_relation"`
+	DrugAllergy       []string `json:"drug_allergy"`
+	FoodAllergy       []string `json:"food_allergy"`
+	MedicalHistory    []string `json:"medical_history"`
 }
 
 // JWTClaims 定義 token payload
@@ -51,14 +60,27 @@ func RegisterPatient(c *gin.Context) {
 		return
 	}
 
+	// 將 slice 轉為 JSON 格式存入 datatypes.JSON
+	drugJSON, _ := json.Marshal(req.DrugAllergy)
+	foodJSON, _ := json.Marshal(req.FoodAllergy)
+	historyJSON, _ := json.Marshal(req.MedicalHistory)
+
 	p := models.Patient{
-		PatientID:     req.PatientID,
-		PatientName:   req.PatientName,
-		PatientGender: req.PatientGender,
-		PatientBirth:  req.PatientBirth,
-		PatientPhone:  req.PatientPhone,
-		Password:      string(hashed),
+		PatientID:         req.PatientID,
+		PatientName:       req.PatientName,
+		PatientGender:     req.PatientGender,
+		PatientBirth:      req.PatientBirth,
+		PatientPhone:      req.PatientPhone,
+		Password:          string(hashed),
+		Address:           req.Address,
+		EmergencyName:     req.EmergencyName,
+		EmergencyPhone:    req.EmergencyPhone,
+		EmergencyRelation: req.EmergencyRelation,
+		DrugAllergy:       datatypes.JSON(drugJSON),
+		FoodAllergy:       datatypes.JSON(foodJSON),
+		MedicalHistory:    datatypes.JSON(historyJSON),
 	}
+
 	if err := db.DB.Create(&p).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "註冊失敗: " + err.Error(), "code": 500})
 		return
@@ -95,7 +117,13 @@ func LoginPatient(c *gin.Context) {
 		return
 	}
 	exp := time.Now().Add(24 * time.Hour)
-	claims := JWTClaims{PatientID: req.PatientID, RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(exp), IssuedAt: jwt.NewNumericDate(time.Now())}}
+	claims := JWTClaims{
+		PatientID: req.PatientID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(exp),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "Token 產生失敗", "code": 500})
@@ -128,8 +156,14 @@ func UpdatePatientProfile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": true, "message": "參數錯誤", "code": 400})
 		return
 	}
-	if err := db.DB.Model(&models.Patient{}).Where("patient_id = ?", pid.(string)).
-		Updates(models.Patient{PatientName: req.PatientName, PatientGender: req.PatientGender, PatientBirth: req.PatientBirth, PatientPhone: req.PatientPhone}).Error; err != nil {
+	if err := db.DB.Model(&models.Patient{}).
+		Where("patient_id = ?", pid.(string)).
+		Updates(models.Patient{
+			PatientName:   req.PatientName,
+			PatientGender: req.PatientGender,
+			PatientBirth:  req.PatientBirth,
+			PatientPhone:  req.PatientPhone,
+		}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "更新失敗", "code": 500})
 		return
 	}
@@ -154,7 +188,9 @@ func ChangePatientPassword(c *gin.Context) {
 		return
 	}
 	newHash, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
-	if err := db.DB.Model(&models.Patient{}).Where("patient_id = ?", pid.(string)).Update("password", string(newHash)).Error; err != nil {
+	if err := db.DB.Model(&models.Patient{}).
+		Where("patient_id = ?", pid.(string)).
+		Update("password", string(newHash)).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "更新密碼失敗", "code": 500})
 		return
 	}

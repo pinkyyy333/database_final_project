@@ -12,6 +12,7 @@ require (
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.30.0
+	gorm.io/datatypes v1.4.0
 )
 
 require (

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>更新看診進度</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 30px;
+      text-align: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(to bottom right, #e0f7fa, #ede7f6);
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px; text-decoration: none; color: #000; font-size: 18px;
+      padding: 5px 10px; border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 220px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background-color: #fff;
+      height: calc(100vh - 60px);
+      /* box-shadow 移除，改為無陰影 */
+      overflow-y: auto;
+    }
+    .sidebar .menu-item {
+      display: block;
+      text-decoration: none;
+      background-color: transparent;
+      color: #26a69a;
+      padding: 12px;
+      border: 2px solid #26a69a;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background-color: #26a69a;
+      color: #fff;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    select, button {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #ffffffdd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    button:hover {
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    .number {
+      font-size: 2em;
+      margin-top: 30px;
+      background-color: #ffffffcc;
+      padding: 20px;
+      border-radius: 12px;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    p {
+      font-size: 1.1em;
+      color: #555;
+    }
+    .content {
+      background: linear-gradient(135deg, #d1e8f2, #e8e9f9);
+      max-width: 800px;      /* 加大寬度 */
+      margin: 100px auto 40px 260px; /* 上方空間留 navbar，左邊留 sidebar */
+      padding: 40px 50px;    /* 加大內距 */
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      font-size: 1.2rem;     /* 整體字體放大 */
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <aside class="sidebar">
+    <a href="doctor_home.html" class="menu-item">最新消息</a>
+    <a href="doctor_schedule.html" class="menu-item">設定排班</a>
+    <a href="doctor_viewschedule.html" class="menu-item">查看班表</a>
+    <a href="doctor_patients.html" class="menu-item">病患清單</a>
+    <a href="doctor_update_progress.html" class="menu-item active">即時看診進度更新</a>
+    <a href="doctor_selectpatient.html" class="menu-item">病患病歷及回饋查詢</a>
+    <a href="logout.html" class="menu-item">登出</a>
+  </aside>
+  <main class="content">
+    <h1>即時看診進度更新</h1>
+    <p>今天日期：<span id="today"></span></p>
+    <p>選擇時段：
+      <select id="session">
+        <option value="morning">早診</option>
+        <option value="afternoon">下午診</option>
+        <option value="evening">晚診</option>
+      </select>
+    </p>
+    <button onclick="nextPatient()">下一位病人</button>
+    <div class="number">目前號碼：第 <span id="current">1</span> 號</div>
+  </main>
+
+  <script>
+    const doctorId = localStorage.getItem("doctorId") || "10001";
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById("today").textContent = today;
+
+    const sessionSelect = document.getElementById("session");
+    const numberSpan = document.getElementById("current");
+
+    function getKey() {
+      return progress_${doctorId}_${today}_${sessionSelect.value};
+    }
+
+    function loadProgress() {
+      const current = parseInt(localStorage.getItem(getKey()) || "1", 10);
+      numberSpan.textContent = current;
+    }
+
+    function nextPatient() {
+      let current = parseInt(localStorage.getItem(getKey()) || "1", 10);
+      if (current < 45) current++;
+      localStorage.setItem(getKey(), current);
+      numberSpan.textContent = current;
+    }
+
+    sessionSelect.addEventListener("change", loadProgress);
+    loadProgress();
+  </script>
+</body>
+</html>

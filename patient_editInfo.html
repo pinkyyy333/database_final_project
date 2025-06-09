@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>編輯個人資料</title>
+  <style>
+    body {
+      background-color: #f3f7fa;
+      font-family: "Microsoft JhengHei", sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+    .form-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 500px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #0a57a3;
+    }
+    form label {
+      display: block;
+      margin: 20px 0 10px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+    legend {
+      font-weight: bold;
+      padding: 0 10px;
+      color: #333;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0a57a3;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #084b8a;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>編輯個人資料</h1>
+    <form id="editForm">
+      <label>手機號碼：
+        <input type="text" id="phone" placeholder="輸入手機號碼" required />
+      </label>
+
+      <label>過敏紀錄：</label>
+      <input type="text" id="new_allergy" placeholder="以「，」分隔多筆過敏項目" />
+
+      <label>過去病史：</label>
+      <input type="text" id="new_record" placeholder="以「，」分隔多筆病史" />
+
+      <label>地址：</label>
+      <input type="text" id="address" placeholder="完整地址" required />
+
+      <fieldset>
+        <legend>緊急聯絡人</legend>
+        <input type="text" id="emergency_name" placeholder="姓名" required />
+        <input type="text" id="emergency_phone" placeholder="手機號碼" required />
+        <input type="text" id="emergency_relation" placeholder="關係" required />
+      </fieldset>
+
+      <button type="submit">儲存</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("請先登入！");
+        location.href = "patient_login.html";
+        return;
+      }
+
+      // 載入現有資料
+      fetch("http://localhost:8080/api/v1/patients/profile", {
+        headers: { "Authorization": "Bearer " + token }
+      })
+      .then(res => res.json())
+      .then(r => {
+        if (r.error) {
+          alert("取得資料失敗：" + r.message);
+          return;
+        }
+        const p = r.patient;
+        document.getElementById("phone").value = p.patient_phone || "";
+        document.getElementById("new_allergy").value = (p.drug_allergy || []).join("，");
+        document.getElementById("new_record").value = (p.medical_history || []).join("，");
+        document.getElementById("address").value = p.address || "";
+        document.getElementById("emergency_name").value = p.emergency_name || "";
+        document.getElementById("emergency_phone").value = p.emergency_phone || "";
+        document.getElementById("emergency_relation").value = p.emergency_relation || "";
+      })
+      .catch(() => {
+        alert("無法連線至後端，請稍後再試");
+      });
+    });
+
+    document.getElementById("editForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const token = localStorage.getItem("token");
+      const phone = document.getElementById("phone").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const emergencyName = document.getElementById("emergency_name").value.trim();
+      const emergencyPhone = document.getElementById("emergency_phone").value.trim();
+      const emergencyRelation = document.getElementById("emergency_relation").value.trim();
+
+      const phoneRegex = /^09\d{8}$/;
+      if (!phoneRegex.test(phone)) {
+        alert("手機號碼格式錯誤，請輸入 09 開頭共 10 碼數字");
+        return;
+      }
+
+      // 組成過敏 & 病史陣列
+      const allergies = document.getElementById("new_allergy").value
+        .split("，").map(s => s.trim()).filter(s => s);
+      const history = document.getElementById("new_record").value
+        .split("，").map(s => s.trim()).filter(s => s);
+
+      // 組 JSON 傳送
+      fetch("http://localhost:8080/api/v1/patients/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          patient_phone: phone,
+          address: address,
+          emergency_name: emergencyName,
+          emergency_phone: emergencyPhone,
+          emergency_relation: emergencyRelation,
+          drug_allergy: allergies,
+          medical_history: history
+        })
+      })
+      .then(res => res.json())
+      .then(r => {
+        if (!r.error) {
+          alert("更新成功！");
+        } else {
+          alert("更新失敗：" + r.message);
+        }
+      })
+      .catch(() => {
+        alert("無法連線至後端，請稍後再試");
+      });
+    });
+  </script>
+</body>
+</html>

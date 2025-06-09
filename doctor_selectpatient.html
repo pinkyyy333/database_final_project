@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>病歷與回饋查詢</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f3f4f6;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 400px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      font-size: 1em;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>查詢病歷與回饋</h2>
+    <form id="patientForm">
+      <label for="patient">選擇病人：</label>
+      <select name="patientId" id="patient" required>
+        <!-- 動態由後端填入 -->
+      </select>
+      <button type="submit">查詢</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('請先登入');
+        return;
+      }
+
+      // 1. 從後端撈出病人清單
+      fetch('http://localhost:8080/api/v1/patients', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('無法取得病人列表');
+        return res.json();
+      })
+      .then(data => {
+        const sel = document.getElementById('patient');
+        sel.innerHTML = '';
+        data.patients.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.patient_id;
+          opt.textContent = `${p.patient_name} (${p.patient_id})`;
+          sel.appendChild(opt);
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        alert('讀取病人清單失敗：' + err.message);
+      });
+
+      // 2. 攔截表單，轉到 patient_history.html 並帶上 patientId
+      document.getElementById('patientForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const pid = document.getElementById('patient').value;
+        window.location.href = `patient_history.html?patientId=${encodeURIComponent(pid)}`;
+      });
+    });
+  </script>
+</body>
+</html>

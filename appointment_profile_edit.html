@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>編輯個人資料</title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background-color: #f0f2f5;
+      margin: 0; padding: 0;
+    }
+    /* navbar 與 sidebar 同上，可重複或抽共用 */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px; text-decoration: none; color: #000; font-size: 18px;
+      padding: 5px 10px; border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 200px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar .menu-item {
+      display: block;
+      text-decoration: none;
+      background-color: transparent;
+      color: #26a69a;
+      padding: 12px;
+      border: 2px solid #26a69a;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background-color: #26a69a;
+      color: #fff;
+    }
+    .main {
+      margin-left: 240px;
+      padding: 100px 40px 40px;
+      max-width: 900px;
+      margin-right: auto;
+    }
+    .form-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 5px;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #34495e;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+    legend {
+      font-weight: bold;
+      padding: 0 10px;
+      color: #333;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0a57a3;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #084b89;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <div class="sidebar">
+    <a href="appointment_news.html" class="menu-item">最新消息</a>
+    <a href="appointment_booking.html" class="menu-item">我要預約</a>
+    <a href="appointment_schedule.html" class="menu-item">查看門診週班表</a>
+    <a href="appointment_vaccine.html" class="menu-item">疫苗接種預約</a>
+    <a href="appointment_profile.html" class="menu-item active">個人資料</a>
+    <a href="appointment_feedback.html" class="menu-item">我要評分</a>
+    <a href="logout.html" class="menu-item">登出</a>
+  </div>
+
+  <main class="main">
+    <div class="form-container">
+      <h2>編輯個人資料</h2>
+      <form id="editForm">
+        <label>手機號碼:
+          <input type="text" id="phone" placeholder="輸入新的手機號碼" required />
+        </label>
+        <label>過敏紀錄:
+          <input type="text" id="new_allergy" placeholder="輸入新的過敏項目" />
+        </label>
+        <label>過去病史:
+          <input type="text" id="new_record" placeholder="輸入新的病史紀錄" />
+        </label>
+        <fieldset>
+          <legend>戶籍地址</legend>
+          <input type="text" id="perm_city" placeholder="縣市" required />
+          <input type="text" id="perm_district" placeholder="行政區" required />
+          <input type="text" id="perm_street" placeholder="路街" required />
+          <input type="text" id="perm_lane" placeholder="段/巷/弄" required />
+          <input type="text" id="perm_number" placeholder="門牌號碼" required />
+        </fieldset>
+        <label><input type="checkbox" id="same_address" /> 現居與戶籍相同</label>
+        <fieldset>
+          <legend>現居地址</legend>
+          <input type="text" id="curr_city" placeholder="縣市" required />
+          <input type="text" id="curr_district" placeholder="行政區" required />
+          <input type="text" id="curr_street" placeholder="路街" required />
+          <input type="text" id="curr_lane" placeholder="段/巷/弄" required />
+          <input type="text" id="curr_number" placeholder="門牌號碼" required />
+        </fieldset>
+        <fieldset>
+          <legend>緊急聯絡人</legend>
+          <input type="text" id="emergency_name" placeholder="姓名" required />
+          <input type="text" id="emergency_phone" placeholder="手機號碼" required />
+          <input type="text" id="emergency_relation" placeholder="關係" required />
+        </fieldset>
+        <button type="submit">儲存</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    // 預設載入示範資料
+    const patientData = {
+      phone: "0912345678",
+      new_allergy: "",
+      new_record: "",
+      curr_city: "",
+      curr_district: "",
+      curr_street: "",
+      curr_lane: "",
+      curr_number: "",
+      perm_city: "",
+      perm_district: "",
+      perm_street: "",
+      perm_lane: "",
+      perm_number: "",
+      emergency_name: "",
+      emergency_phone: "",
+      emergency_relation: ""
+    };
+
+    // 載入資料
+    window.onload = () => {
+      for (const key in patientData) {
+        const el = document.getElementById(key);
+        if (el) el.value = patientData[key];
+      }
+    };
+
+    // 同戶籍地址複製
+    document.getElementById("same_address").addEventListener("change", function(){
+      if(this.checked){
+        document.getElementById("curr_city").value = document.getElementById("perm_city").value;
+        document.getElementById("curr_district").value = document.getElementById("perm_district").value;
+        document.getElementById("curr_street").value = document.getElementById("perm_street").value;
+        document.getElementById("curr_lane").value = document.getElementById("perm_lane").value;
+        document.getElementById("curr_number").value = document.getElementById("perm_number").value;
+      }
+    });
+
+    // 表單送出示意
+    document.getElementById("editForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert("資料已儲存（範例）");
+      // 實際可換成fetch API送後端
+      window.location.href = "appointment_profile.html";
+    });
+  </script>
+</body>
+</html>

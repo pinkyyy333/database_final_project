@@ -1,0 +1,26 @@
+<!-- admin_schedule.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>醫師排班管理</title>
+</head>
+<body>
+  <h1>醫師排班管理</h1>
+  <label>選擇醫師: <select id="doctorSelect"></select></label>
+  <label>選擇月份: <input type="month" id="monthSelect"></label>
+  <div id="calendar"></div>
+  <button onclick="saveSchedule()">儲存排班</button>
+
+  <script>
+    const doctorList = ['王大明', '林小芳'];
+    doctorList.forEach(name => {
+      const opt = document.createElement("option");
+      opt.textContent = name;
+      document.getElementById("doctorSelect").appendChild(opt);
+    });
+
+    function saveSchedule() { alert("排班儲存成功！（模擬）"); }
+  </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>病歷與回饋查詢</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      padding: 30px;
+      color: #111;
+    }
+    h2 {
+      color: #1d4ed8;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    .record, .feedback {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .record h4, .feedback h4 {
+      margin: 0 0 5px;
+      color: #0f172a;
+    }
+    .feedback p {
+      margin: 5px 0;
+    }
+    .stat {
+      background: #e0f2fe;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2 id="title">病歷與回饋</h2>
+
+  <div class="section" id="medicalRecords">
+    <h3>🩺 過去病歷紀錄</h3>
+    <!-- 病歷會插入在這 -->
+  </div>
+
+  <div class="section" id="feedbackSection">
+    <h3>💬 病人回饋</h3>
+    <div class="stat" id="averageRating">平均評分：-</div>
+    <!-- 回饋會插入在這 -->
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const patientId = localStorage.getItem('patient_id');
+      if (!token || !patientId) {
+        alert('請先登入');
+        window.location.href = 'patient_login.html';
+        return;
+      }
+
+      // 顯示標題
+      document.getElementById('title').textContent = `${patientId} 的病歷與回饋`;
+
+      // 1. 取得病患所有預約
+      fetch(`http://localhost:8080/api/v1/appointments/patient/${patientId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.message);
+        const appts = data.appointments || [];
+        const recDiv = document.getElementById('medicalRecords');
+        if (appts.length === 0) {
+          recDiv.innerHTML += '<p>尚無病歷資料。</p>';
+        } else {
+          appts.forEach(a => {
+            recDiv.innerHTML += `
+              <div class="record">
+                <h4>📅 日期：${new Date(a.appointment_time).toISOString().slice(0,10)}</h4>
+                <p>服務類型：${a.service_type}</p>
+                <p>狀態：${a.status}</p>
+              </div>`;
+          });
+        }
+        return appts;
+      })
+      // 2. 取得各科醫師回饋並過濾此病患
+      .then(appts => {
+        const docIds = [...new Set(appts.map(a => a.doctor_id))];
+        return Promise.all(docIds.map(did =>
+          fetch(`http://localhost:8080/api/v1/doctors/${did}/feedbacks`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          }).then(r => r.json())
+        )).then(results => ({ results, appts }));
+      })
+      .then(({ results, appts }) => {
+        const fbDiv = document.getElementById('feedbackSection');
+        let allFeedbacks = [];
+        results.forEach(res => {
+          if (!res.error) {
+            res.feedbacks.forEach(f => {
+              // 內含 Appointment 關聯
+              if (f.Appointment && f.Appointment.patient_id === patientId) {
+                allFeedbacks.push(f);
+              }
+            });
+          }
+        });
+        if (allFeedbacks.length === 0) {
+          fbDiv.innerHTML += '<p>尚無回饋資料。</p>';
+        } else {
+          let sum = 0;
+          allFeedbacks.forEach(f => {
+            sum += f.feedback_rating;
+            fbDiv.innerHTML += `
+              <div class="feedback">
+                <h4>⭐ 評分：${f.feedback_rating}</h4>
+                <p>${f.patient_comment}</p>
+              </div>`;
+          });
+          const avg = (sum / allFeedbacks.length).toFixed(1);
+          document.getElementById('averageRating').textContent = `平均評分：${avg} / 5`;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('資料載入失敗：' + err.message);
+      });
+    });
+  </script>
+</body>
+</html>

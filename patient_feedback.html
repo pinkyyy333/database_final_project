@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>病人回饋</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #f4f8fc;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      background-color: #fff;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #0a57a3;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #333;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    #charCount {
+      text-align: right;
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #0a57a3;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #084b89;
+    }
+    #message {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e7f7ec;
+      border: 1px solid #88c9b6;
+      border-radius: 5px;
+      color: #256442;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>病人回饋意見</h1>
+
+    <form id="feedbackForm">
+      <label for="rating">請給予本次就診滿意度評分（1~5分）</label>
+      <select id="rating" required>
+        <option value="">請選擇</option>
+        <option value="1">1 分 - 非常不滿意</option>
+        <option value="2">2 分</option>
+        <option value="3">3 分</option>
+        <option value="4">4 分</option>
+        <option value="5">5 分 - 非常滿意</option>
+      </select>
+
+      <label for="comment">您的意見（最多200字）</label>
+      <textarea id="comment" maxlength="200" required></textarea>
+      <div id="charCount">0 / 200</div>
+
+      <button type="submit">送出回饋</button>
+    </form>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const apptId = new URLSearchParams(window.location.search).get('appointmentId');
+      if (!token) {
+        alert('請先登入！');
+        window.location.href = 'patient_login.html';
+        return;
+      }
+      if (!apptId) {
+        alert('找不到 Appointment ID，無法送出回饋');
+        return;
+      }
+
+      const form = document.getElementById('feedbackForm');
+      const comment = document.getElementById('comment');
+      const charCount = document.getElementById('charCount');
+      const message = document.getElementById('message');
+
+      comment.addEventListener('input', () => {
+        charCount.textContent = `${comment.value.length} / 200`;
+      });
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const rating = document.getElementById('rating').value;
+        const text = comment.value.trim();
+
+        if (!rating || text.length === 0) {
+          alert('請完整填寫評分與意見內容');
+          return;
+        }
+        if (text.length > 200) {
+          alert('評論不得超過 200 字');
+          return;
+        }
+
+        fetch('http://localhost:8080/api/v1/feedbacks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            appointment_id: Number(apptId),
+            feedback_rating: Number(rating),
+            patient_comment: text
+          })
+        })
+        .then(res => res.json())
+        .then(json => {
+          if (!json.error) {
+            message.textContent = '感謝您的寶貴意見！我們會持續改進服務品質。';
+            message.style.display = 'block';
+            form.reset();
+            charCount.textContent = '0 / 200';
+          } else {
+            alert('送出失敗：' + json.message);
+          }
+        })
+        .catch(() => {
+          alert('伺服器或網路錯誤，請稍後再試');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

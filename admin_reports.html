@@ -1,0 +1,42 @@
+<!-- admin_reports.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>每日報表</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    ul { list-style-type: none; padding: 0; }
+    li { padding: 8px 0; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>每日報表</h1>
+  <ul>
+    <li>總預約數：<span id="totalAppointments">載入中...</span></li>
+    <li>缺席率：<span id="noShowRate">載入中...</span></li>
+    <li>醫師利用率：<span id="doctorUtilization">載入中...</span></li>
+  </ul>
+
+  <script>
+    // 模擬從後端取得資料（假資料）
+    const reportData = {
+      totalAppointments: 285,
+      noShowCount: 16,
+      attendedCount: 269,
+      maxAvailableSlots: 306 // 所有醫師當日總可看診人數（例如：內外耳三科各2人 * 每人2時段 * 45人）
+    };
+
+    // 計算動態數據
+    const totalAppointments = reportData.totalAppointments;
+    const noShowRate = ((reportData.noShowCount / totalAppointments) * 100).toFixed(1) + '%';
+    const doctorUtilization = ((reportData.attendedCount / reportData.maxAvailableSlots) * 100).toFixed(1) + '%';
+
+    // 顯示在畫面上
+    document.getElementById('totalAppointments').textContent = totalAppointments;
+    document.getElementById('noShowRate').textContent = noShowRate;
+    document.getElementById('doctorUtilization').textContent = doctorUtilization;
+  </script>
+</body>
+</html>

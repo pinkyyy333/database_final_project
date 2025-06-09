@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>醫師端 - 今日病患清單</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px; text-decoration: none; color: #000; font-size: 18px;
+      padding: 5px 10px; border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 220px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background-color: #fff;
+      height: calc(100vh - 60px);
+      /* box-shadow 移除，改為無陰影 */
+      overflow-y: auto;
+    }
+    .sidebar .menu-item {
+      display: block;
+      text-decoration: none;
+      background-color: transparent;
+      color: #26a69a;
+      padding: 12px;
+      border: 2px solid #26a69a;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background-color: #26a69a;
+      color: #fff;
+    }
+    .content {
+      background-color: rgba(234, 246, 255, 0.95);
+      max-width: 900px;
+      margin: 80px auto 40px 360px;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      color: #003366;
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #38bdf8;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    .status {
+      font-weight: bold;
+    }
+
+    .status.已報到 {
+      color: green;
+    }
+
+    .status.未出現 {
+      color: red;
+    }
+
+    .status.已完成 {
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <aside class="sidebar">
+    <a href="doctor_home.html" class="menu-item">最新消息</a>
+    <a href="doctor_schedule.html" class="menu-item">設定排班</a>
+    <a href="doctor_viewschedule.html" class="menu-item">查看班表</a>
+    <a href="doctor_patients.html" class="menu-item active">病患清單</a>
+    <a href="doctor_update_progress.html" class="menu-item">即時看診進度更新</a>
+    <a href="doctor_selectpatient.html" class="menu-item">病患病歷及回饋查詢</a>
+    <a href="logout.html" class="menu-item">登出</a>
+  </aside>
+  <div class="content">
+    <h2>今日病患清單</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>姓名</th>
+          <th>身分證</th>
+          <th>看診序號</th>
+          <th>預計看診時間</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody id="patientTableBody">
+        <tr><td colspan="5">載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    fetch('/api/today_patients')
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.getElementById('patientTableBody');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5">今天沒有排程病患。</td></tr>';
+        } else {
+          data.forEach(patient => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${patient.name}</td>
+              <td>${patient.id}</td>
+              <td>${patient.appointmentTime}</td>
+              <td>${patient.appointmentTime}</td>
+              <td class="status ${patient.status}" data-id="${patient.appointmentId}" data-time="${patient.appointmentTime}">${patient.status}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+        checkNoShow();   // 【4】渲染後立即檢查一次
+      })
+      .catch(error => {
+        console.error('載入錯誤:', error);
+        document.getElementById('patientTableBody').innerHTML = '<tr><td colspan="5">無法取得資料。</td></tr>';
+      });
+      /**
+     * 【3】自動未出現檢查函式
+     *   - 每分鐘檢查一次已過預約時間但仍為 "booked" 的狀態
+     *   - 標記為 "未出現" 並更新樣式
+     *   - TODO: 呼叫後端 PATCH /api/appointments/:id/status 更新資料庫
+     */
+    function checkNoShow() {
+      const now = new Date();
+      document.querySelectorAll('.status[data-time]').forEach(cell => {
+        const apptTime = new Date(cell.dataset.time);
+        if (cell.textContent === 'booked' && now > apptTime) {
+          const id = cell.dataset.id;
+          cell.textContent = '未出現';
+          cell.classList.remove('booked');
+          cell.classList.add('未出現');
+          cell.classList.add('no-show');
+          // TODO: call backend PATCH `/api/appointments/${id}/status` with { status: 'no_show' }
+        }
+      });
+    }
+
+    // 定時執行
+    setInterval(checkNoShow, 60 * 1000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>病人個人資料</title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background-color: #f0f2f5;
+      padding: 30px;
+    }
+
+    .profile-container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 5px;
+      margin-bottom: 20px;
+    }
+
+    .info-group {
+      margin-bottom: 20px;
+    }
+
+    .info-group label {
+      font-weight: bold;
+      color: #34495e;
+    }
+
+    .info-group p {
+      margin: 4px 0 12px;
+      color: #555;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-container">
+    <h2>病人基本資料</h2>
+
+    <div class="info-group"><label>帳號：</label><p id="account"></p></div>
+    <div class="info-group"><label>姓名：</label><p id="name"></p></div>
+    <div class="info-group"><label>出生年月日：</label><p id="birthdate"></p></div>
+    <div class="info-group"><label>手機號碼：</label><p id="phone"></p></div>
+    <div class="info-group"><label>現居地址：</label><p id="current_address"></p></div>
+    <div class="info-group"><label>戶籍地址：</label><p id="registered_address"></p></div>
+    <div class="info-group"><label>緊急聯絡人：</label><p id="emergency_contact"></p></div>
+    <div class="info-group"><label>過敏藥物：</label><p id="allergy_drugs"></p></div>
+    <div class="info-group"><label>過敏食物：</label><p id="allergy_foods"></p></div>
+    <div class="info-group"><label>過去病史：</label><p id="medical_history"></p></div>
+
+    <h2>預約紀錄</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>時段</th>
+          <th>科別</th>
+          <th>醫師</th>
+        </tr>
+      </thead>
+      <tbody id="appointments">
+        <!-- JavaScript 動態插入 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const account = localStorage.getItem("account");
+    if (!account) {
+      alert("請先以病人身份登入才能查看個人資料！");
+      window.location.href = "patient_login.html";
+    }
+
+    function formatAddress(city, district, street, lane, number) {
+      return [city, district, street, lane, number].filter(Boolean).join('');
+    }
+
+    fetch(`http://localhost:8080/api/v1/patients/病人資料?patientId=${encodeURIComponent(account)}`)
+      .then(response => {
+        if (!response.ok) throw new Error("無法取得病人資料");
+        return response.json();
+      })
+      .then(data => {
+        // 病人資料填入
+        document.getElementById("account").textContent = data.Patient_ID || '';
+        document.getElementById("name").textContent = data.Patient_Name || '';
+        document.getElementById("birthdate").textContent = data.Patient_Birth || '';
+        document.getElementById("phone").textContent = data.Patient_Phone || '';
+        document.getElementById("current_address").textContent =
+          formatAddress(data.Current_City, data.Current_District, data.Current_Street, data.Current_Lane, data.Current_Number);
+        document.getElementById("registered_address").textContent =
+          formatAddress(data.Permanent_City, data.Permanent_District, data.Permanent_Street, data.Permanent_Lane, data.Permanent_Number);
+        document.getElementById("emergency_contact").textContent =
+          `${data.Emergency_Name || ''} ${data.Emergency_Phone || ''} (${data.Emergency_Relation || ''})`;
+        document.getElementById("allergy_drugs").textContent = data.drug_allergy || "無";
+        document.getElementById("allergy_foods").textContent = data.food_allergy || "無";
+        document.getElementById("medical_history").textContent = data.medical_history || "無";
+
+        // 預約紀錄填入
+        const tbody = document.getElementById("appointments");
+        if (Array.isArray(data.appointments)) {
+          data.appointments.forEach(record => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${record.date || ''}</td>
+              <td>${record.time || ''}</td>
+              <td>${record.dept || ''}</td>
+              <td>${record.doctor || ''}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      })
+      .catch(error => {
+        console.error("錯誤：", error);
+        alert("載入病人資料時發生錯誤！");
+      });
+  </script>
+
+</body>
+</html>

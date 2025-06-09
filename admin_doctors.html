@@ -1,0 +1,41 @@
+<!-- admin_doctors.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>醫師資料管理</title>
+</head>
+<body>
+  <h1>醫師資料管理</h1>
+  <button onclick="addDoctor()">新增醫師</button>
+  <table border="1">
+    <thead>
+      <tr><th>ID</th><th>姓名</th><th>科別</th><th>性別</th><th>學歷</th><th>雇用日</th><th>電話</th><th>操作</th></tr>
+    </thead>
+    <tbody id="doctorTable"></tbody>
+  </table>
+
+  <script>
+    const doctors = [
+      {id: '10001', name: '王大明', dept: '內科', gender: '男', edu: '台大醫學', hireDate: '2022-01-01', phone: '0912345678'},
+      {id: '10002', name: '林小芳', dept: '外科', gender: '女', edu: '陽明大學', hireDate: '2023-03-15', phone: '0987654321'}
+    ];
+
+    function loadDoctors() {
+      const tbody = document.getElementById("doctorTable");
+      tbody.innerHTML = '';
+      doctors.forEach((d, i) => {
+        tbody.innerHTML += `<tr>
+          <td>${d.id}</td><td>${d.name}</td><td>${d.dept}</td><td>${d.gender}</td>
+          <td>${d.edu}</td><td>${d.hireDate}</td><td>${d.phone}</td>
+          <td><button onclick="editDoctor(${i})">編輯</button><button onclick="deleteDoctor(${i})">刪除</button></td>
+        </tr>`;
+      });
+    }
+    function addDoctor() { alert("彈出新增表單（模擬）"); }
+    function editDoctor(i) { alert("彈出編輯醫師「" + doctors[i].name + "」表單（模擬）"); }
+    function deleteDoctor(i) { doctors.splice(i, 1); loadDoctors(); }
+    loadDoctors();
+  </script>
+</body>
+</html>

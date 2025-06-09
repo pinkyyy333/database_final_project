@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>病歷紀錄</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #f2f7fb;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #0a57a3;
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #0a57a3;
+      border-bottom: 2px solid #0a57a3;
+      padding-bottom: 5px;
+      margin-top: 30px;
+    }
+    .record {
+      background-color: #f1f5fb;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    p, li {
+      line-height: 1.6;
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>病歷紀錄</h1>
+    
+    <section class="profile">
+      <h2>基本資訊</h2>
+      <p id="name"></p>
+      <p id="id"></p>
+      <p id="birth"></p>
+    </section>
+
+    <section class="allergy">
+      <h2>過敏與病史</h2>
+      <p><strong>過敏藥物：</strong><span id="drugAllergy"></span></p>
+      <p><strong>過敏食物：</strong><span id="foodAllergy"></span></p>
+      <p><strong>過去病史：</strong><span id="medicalHistory"></span></p>
+    </section>
+
+    <section class="history">
+      <h2>歷次看診紀錄</h2>
+      <div id="records"></div>
+    </section>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const patientId = localStorage.getItem('patient_id');
+      if (!token || !patientId) {
+        alert('請先登入並帶入 patient_id');
+        window.location.href = 'patient_login.html';
+        return;
+      }
+
+      // 1. 取得基本資訊 + 過敏、病史
+      fetch('http://localhost:8080/api/v1/patients/profile', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.message);
+        const p = data.patient;
+        document.getElementById('name').textContent  = '姓名：' + p.patient_name;
+        document.getElementById('id').textContent    = '身分證字號：' + p.patient_id;
+        document.getElementById('birth').textContent = '出生年月日：' + p.patient_birth;
+
+        document.getElementById('drugAllergy').textContent    = (p.drug_allergy || []).join('，') || '無';
+        document.getElementById('foodAllergy').textContent    = (p.food_allergy || []).join('，') || '無';
+        document.getElementById('medicalHistory').textContent = (p.medical_history || []).join('，') || '無';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('取得個人資料失敗：' + err.message);
+      });
+
+      // 2. 取得歷次看診紀錄
+      fetch(`http://localhost:8080/api/v1/appointments/patient/${patientId}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.message);
+        const appts = data.appointments || [];
+        const container = document.getElementById('records');
+        if (appts.length === 0) {
+          container.innerHTML = '<p>尚無看診紀錄。</p>';
+        } else {
+          appts.forEach(a => {
+            const d = new Date(a.appointment_time);
+            const record = document.createElement('div');
+            record.className = 'record';
+            record.innerHTML = `
+              <p><strong>日期：</strong>${d.toISOString().slice(0,10)}</p>
+              <p><strong>科別 ID：</strong>${a.department_id}</p>
+              <p><strong>服務類型：</strong>${a.service_type}</p>
+              <p><strong>狀態：</strong>${a.status}</p>
+            `;
+            container.appendChild(record);
+          });
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('取得看診紀錄失敗：' + err.message);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!-- admin_appointment_slots.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <script>
+  // ── 新增：檢查登入 Token，若無則回到登入頁
+  const token = localStorage.getItem('manager_token');
+  if (!token) {
+    location.href = 'admin_login.html';
+  }
+</script>
+  <meta charset="UTF-8" />
+  <title>可預約時段設定</title>
+</head>
+<body>
+  <h1>可預約時段管理</h1>
+  <p>點選日曆 → 顯示當天排班醫師 → 顯示該醫師預約人數（模擬）</p>
+  <div id="calendar">（模擬日曆區塊）</div>
+  <p>範例顯示：6/7 早診（2 位醫師）→ 點選林小芳 → 目前預約 38/45</p>
+</body>
+</html>

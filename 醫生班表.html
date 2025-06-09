@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>醫師排班設定</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    td, th {
+      border: 1px solid #ccc;
+      padding: 8px;
+      vertical-align: top;
+      min-width: 120px;
+    }
+    .shift-label {
+      display: block;
+      margin: 2px 0;
+    }
+    .doctor-select {
+      margin-bottom: 10px;
+    }
+    select {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>醫師排班設定</h2>
+
+  <div class="doctor-select">
+    <label for="department">科別：</label>
+    <select id="department" onchange="populateDoctors()" required>
+      <option value="">請選擇科別</option>
+      <option value="內科">內科</option>
+      <option value="外科">外科</option>
+      <option value="耳鼻喉科">耳鼻喉科</option>
+    </select>
+
+    <label for="doctor">醫師：</label>
+    <select id="doctor" required>
+      <option value="">請選擇醫師</option>
+    </select>
+
+    <label for="month">選擇月份：</label>
+    <input type="month" id="month" value="2025-06" />
+    <button onclick="generateCalendar()">產生排班表</button>
+  </div>
+
+  <form id="scheduleForm">
+    <table id="calendarTable">
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>星期</th>
+          <th>排班時段</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 日曆將在這裡產生 -->
+      </tbody>
+    </table>
+    <br />
+    <button type="submit">儲存排班</button>
+  </form>
+
+  <script>
+    const doctorData = {
+      "內科": [
+        { name: "張大人", id: "IM001" },
+        { name: "李小童", id: "IM002" }
+      ],
+      "外科": [
+        { name: "王大名", id: "SU001" },
+        { name: "趙小書", id: "SU002" }
+      ],
+      "耳鼻喉科": [
+        { name: "陳俊佑",id: "EN001" },
+        { name: "林大同", id: "EN002" }
+      ]
+    };
+
+    const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+    const shifts = [
+      { label: "早班 (08:00-11:00)", value: "morning" },
+      { label: "中班 (13:00-16:00)", value: "afternoon" },
+      { label: "晚班 (18:00-21:00)", value: "evening" }
+    ];
+
+    function populateDoctors() {
+      const dept = document.getElementById("department").value;
+      const doctorSelect = document.getElementById("doctor");
+      doctorSelect.innerHTML = `<option value="">請選擇醫師</option>`;
+
+      if (doctorData[dept]) {
+        doctorData[dept].forEach(doc => {
+          const option = document.createElement("option");
+          option.value = doc.id;
+          option.textContent = `${doc.name}（${doc.id}）`;
+          doctorSelect.appendChild(option);
+        });
+      }
+    }
+
+    function generateCalendar() {
+      const monthInput = document.getElementById("month").value;
+      const [year, month] = monthInput.split("-").map(Number);
+      const firstDay = new Date(year, month - 1, 1);
+      const lastDay = new Date(year, month, 0);
+      const tableBody = document.querySelector("#calendarTable tbody");
+      tableBody.innerHTML = "";
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month - 1, day);
+        const weekday = weekdays[date.getDay()];
+
+        const row = document.createElement("tr");
+        const dateCell = document.createElement("td");
+        dateCell.textContent = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+        const weekCell = document.createElement("td");
+        weekCell.textContent = `星期${weekday}`;
+
+        const shiftCell = document.createElement("td");
+
+        shifts.forEach(shift => {
+          const label = document.createElement("label");
+          label.className = "shift-label";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.name = `schedule[${dateCell.textContent}][]`;
+          checkbox.value = shift.value;
+
+          label.appendChild(checkbox);
+          label.append(` ${shift.label}`);
+          shiftCell.appendChild(label);
+        });
+
+        row.appendChild(dateCell);
+        row.appendChild(weekCell);
+        row.appendChild(shiftCell);
+        tableBody.appendChild(row);
+      }
+    }
+
+    document.getElementById("scheduleForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const schedule = {};
+
+      for (let [key, value] of formData.entries()) {
+        const date = key.match(/\[(.*?)\]/)[1];
+        if (!schedule[date]) schedule[date] = [];
+        schedule[date].push(value);
+      }
+
+      const dept = document.getElementById("department").value;
+      const doctorId = document.getElementById("doctor").value;
+      if (!dept || !doctorId) {
+        alert("請先選擇科別與醫師！");
+        return;
+      }
+
+      console.log("科別：", dept);
+      console.log("醫師：", doctorId);
+      console.log("排班資料：", schedule);
+      alert("排班已儲存（模擬）");
+    });
+  </script>
+</body>
+</html>
+
+
+
+

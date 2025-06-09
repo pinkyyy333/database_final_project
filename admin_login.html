@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <script>
+  // 後端 API Base URL
+  const API_BASE = "http://localhost:8080/api/v1";
+  // 登入後取得的 JWT
+  const token = localStorage.getItem("token");
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理者登入系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f7;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 5%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px;
+      text-decoration: none;
+      color: #000;
+      font-size: 18px;
+      padding: 5px 10px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5; font-weight: bold; border-bottom: 2px solid #0052a5;
+    }
+    .login-container {
+      background-color: #fff;
+      padding: 30px;
+      max-width: 400px;
+      margin: 120px auto 40px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #800080;
+      margin: 0 0 20px;
+      font-size: 1.8rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #800080;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #660166;
+    }
+    .register-link {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      color: #00c2d7;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .register-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <div class="login-container">
+    <h2>管理者登入</h2>
+    <form id="adminLoginForm">
+      <label for="username">帳號</label>
+      <input type="text" id="username" name="username" required>
+      <label for="password">密碼</label>
+      <input type="password" id="password" name="password" required>
+      <button type="submit">登入</button>
+    </form>
+    <a class="register-link" href="admin_register.html">沒有帳號？立即註冊</a>
+    <p id="errorMessage" class="hidden" style="color:red; text-align:center;">帳號或密碼錯誤！</p>
+    <style>
+      .hidden { display: none; }
+    </style>
+  </div>
+
+  <script>
+    document.getElementById("adminLoginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const username = this.username.value.trim();
+      const password = this.password.value;
+
+      fetch('http://localhost:8080/api/v1/manager/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username, password})
+        
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('伺服器錯誤');
+        return res.json();
+      })
+      .then(data => {
+        if (data.success) {
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('role', 'admin');
+          window.location.href = 'admin_dashboard.html';
+        } else {
+          const errElem = document.getElementById('errorMessage');
+          errElem.classList.remove('hidden');
+        }
+      })
+      .catch(err => {
+        alert('系統錯誤，請稍後再試');
+        console.error(err);
+      });
+    });
+    </script>
+</body>
+</html>

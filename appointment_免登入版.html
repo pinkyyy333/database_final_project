@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>醫師團隊與預約掛號</title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background-color: #d8fafe;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 40px 20px;
+    }
+
+    .title {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 40px;
+    }
+
+    .department {
+      margin-bottom: 60px;
+    }
+
+    .department h2 {
+      font-size: 24px;
+      color: #1f3a93;
+      border-left: 5px solid #1f3a93;
+      padding-left: 10px;
+      margin-bottom: 20px;
+    }
+
+    .doctor-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      width: 230px;
+      text-align: left;
+      overflow: hidden;
+      min-height: auto;
+    }
+
+    .card img {
+      width: 100%;
+      max-height: 150px;  /* 縮小圖片高度 */
+      object-fit: contain;
+      background-color: #f0f0f0;
+    }
+
+    .card-content {
+      padding: 10px;  /* 減少內距 */
+    }
+
+    .card h3 {
+      margin: 0 0 3px;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .card p {
+      margin: 3px 0;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.4;
+    }
+
+
+    .department-description {
+      margin: -10px 0 20px 5px;
+      color: #666;
+      font-size: 15px;
+    }
+
+    .form-container {
+      max-width: 600px;
+      background-color: #fff;
+      margin: 60px auto;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    select,
+    input[type="text"],
+    input[type="date"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      font-size: 16px;
+      transition: border 0.3s ease;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #3399ff;
+      background-color: #fff;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 30px;
+      background-color: #3399ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #007acc;
+    }
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background-color: #f7f9fa;
+      margin: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #003366;
+    }
+
+    select {
+      font-size: 1em;
+      padding: 5px 10px;
+      margin-bottom: 10px;
+      margin-right: 20px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px #ccc;
+        table-layout: fixed; /* 讓欄位寬度固定分配 */
+    }
+
+    td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+        vertical-align: middle;
+        /* 設定欄寬 */
+        width: 12.5%;  /* 8欄，7天+班別+科別，大約12.5% */
+        word-wrap: break-word; /* 內容太長換行 */
+    }
+
+    th {
+        border: 1px solid #ccc;
+        background-color: #60b0ff;
+        color: #000000; 
+    }
+
+    /* 班別和科別欄寬較小 */
+    th:first-child, td:first-child { 
+        width: 15%;
+    }
+    th:nth-child(2), td:nth-child(2) {
+        width: 15%;
+    }
+
+    .dept {
+      font-weight: bold;
+      background-color: #e8f4fd;
+    }
+
+    .doctor-name {
+      font-weight: bold;
+      color: #003366;
+      padding: 2px 4px;
+      display: inline-block;
+      border-radius: 4px;
+    }
+
+    .full {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    .start-time {
+      color: #2c7be5;
+      font-size: 0.9em;
+    }
+
+    .reg-info {
+      color: #d35400;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="title">醫師團隊介紹</h1>
+    <div id="department-container"></div>
+  </div>
+
+  <h1>門診週班表</h1>
+
+  <label for="monthSelect">選擇月份：</label>
+  <select id="monthSelect"></select>
+
+  <label for="weekSelect">選擇週次：</label>
+  <select id="weekSelect"></select>
+
+  <div id="scheduleTable"></div>
+
+  <div class="form-container">
+    <h2>病人預約掛號系統</h2>
+    <form method="POST" action="register.php">
+      <label for="dept_id">選擇科別：</label>
+      <select name="dept_id" id="dept_id" required>
+        <option value="">請選擇</option>
+        <option value="1">耳鼻喉科</option>
+        <option value="2">皮膚科</option>
+      </select>
+
+      <label for="date">選擇日期：</label>
+      <input type="date" name="date" id="date" required>
+
+      <label for="timeslot">選擇時段：</label>
+      <select name="timeslot" id="timeslot" required>
+        <option value="9:00-12:00">9:00-12:00</option>
+        <option value="14:00-17:00">14:00-17:00</option>
+        <option value="19:00-22:00">19:00-22:00</option>
+      </select>
+
+      <label for="doctor_id">選擇醫生：</label>
+      <select name="doctor_id" id="doctor_id" required>
+        <option selected disabled>請先選擇科別與時段</option>
+      </select>
+
+      <label for="patient_id">病人帳號：</label>
+      <input type="text" name="patient_id" id="patient_id" placeholder="請登入後自動填入" required>
+
+      <button type="submit">送出預約</button>
+    </form>
+  </div>
+
+  <script>
+    const departments = {
+      "院長": [{
+        name: '陳建民',
+        title: "院長、外科主治醫生",
+        education: "國立台灣大學醫學系",
+        experience: '台大醫院、榮總住院醫師',
+        specialty: "大腸直腸癌手術、甲狀腺與乳房腫瘤切除、腹腔鏡微創手術",
+        image: "醫生1.jpg"
+      }],
+      "外科": {
+        description:"外科主要以手術方式治療消化道、甲狀腺、乳房等器官的疾病，強調微創與術後照護。本院外科團隊具備微創手術經驗，強調術後疼痛控制與快速康復，並配有術前評估與術後追蹤管理，提供病患安全、精準與個別化的外科治療服務。",
+        doctors: [
+        {
+          name: '林芳瑜',
+          title: "主治醫師",
+          education: '國立陽明交通大學醫學系',
+          experience: '亞東醫院主治醫師',
+          specialty: '肛門痔瘡手術、體表腫瘤/囊腫切除',
+          image: "醫生2.jpg"
+      }]
+    },
+      "內科": {
+        description: "內科專注於以藥物與非手術方式治療慢性病、感染與器官系統疾病，是病患的重要初診科別。我們的內科團隊致力於以循證醫學（EBM）為基礎，配合臨床指引與多專科會診模式，為病患提供連續性、個別化與預防導向的全人照護。",
+        doctors: [
+        {
+        name: '張育誠',
+        title: "主治醫師",
+        education: '高雄醫學大學醫學系',
+        experience: '馬偕醫院',
+        specialty: "糖尿病、慢性腎臟病",
+        image: "醫生3.jpg"
+      }, {
+        name: '周怡君',
+        title: "主治醫師",
+        education: '中山醫學大學醫學系',
+        experience: '彰基、澄清醫院',
+        specialty: '腸胃疾病、呼吸道疾病',
+        image: "醫生4.jpg"
+      }]
+    },
+      "耳鼻喉科": {
+        description: "耳鼻喉科治療耳、鼻、喉部疾病，涵蓋鼻炎、聲音沙啞、聽力障礙與打鼾等多項專業項目。耳鼻喉科設有專業檢查儀器（內視鏡、聲門動態分析、聽力檢查室等），並與睡眠中心與復健科合作，提供打鼾治療、語音治療等多元整合服務。",
+        doctors: [
+        {
+        name: '李冠廷',
+        title: "主治醫師",
+        education: '中國醫藥大學醫學系',
+        experience: '中醫附醫',
+        specialty: '過敏性鼻炎、耳鳴、眩暈與中耳炎診治',
+        image: "醫生5.jpg"
+      }, {
+        name: '吳宛蓉',
+        title: "主治醫師",
+        education: '馬偕醫學院醫學系',
+        experience: '馬偕耳鼻喉科診所',
+        specialty: '鼻過敏與長期鼻塞治療、聽力檢查與耳道異物處理',
+        image: "醫生6.jpg"
+      }]
+    }
+    };
+
+    const container = document.getElementById("department-container");
+
+    for (const dept in departments) {
+      const section = document.createElement("section");
+      section.className = "department";
+
+      const header = document.createElement("h2");
+      header.textContent = dept;
+      section.appendChild(header);
+
+      const list = document.createElement("div");
+      list.className = "doctor-list";
+
+      let doctors = [];
+      
+      if (Array.isArray(departments[dept])) {
+        // 院長是陣列
+        doctors = departments[dept];
+      } else {
+        // 有描述的科別
+        const description = document.createElement("p");
+        description.className = "department-description";
+        description.textContent = departments[dept].description;
+        section.appendChild(description);
+
+        doctors = departments[dept].doctors;
+      }
+
+      doctors.forEach(doc => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${doc.image}" alt="${doc.name}">
+          <div class="card-content">
+            <h3>${doc.name}</h3>
+            <p><strong>${doc.title}</strong></p>
+            <p><strong>學歷：</strong>${doc.education}</p>
+            <p><strong>經歷：</strong>${doc.experience}</p>
+            <p><strong>專長：</strong>${doc.specialty}</p>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      section.appendChild(list);
+      container.appendChild(section);
+    }
+  const monthSelect = document.getElementById("monthSelect");
+  const weekSelect = document.getElementById("weekSelect");
+  const scheduleTableDiv = document.getElementById("scheduleTable");
+
+  let scheduleDataByMonth = {};
+
+  // 載入 JSON 班表資料
+  fetch('http://localhost:8080/api/v1/patients/appointment')
+    .then(response => {
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.json();
+    })
+    .then(data => {
+      scheduleDataByMonth = data;
+      populateMonthSelect();
+    })
+    .catch(error => {
+      console.error("載入班表資料失敗：", error);
+      scheduleTableDiv.innerHTML = `<p style="color:red;">無法載入班表資料，請稍後再試。</p>`;
+    });
+
+  function populateMonthSelect() {
+    monthSelect.innerHTML = "";
+    for (const month in scheduleDataByMonth) {
+      const option = document.createElement("option");
+      option.value = month;
+      option.textContent = month;
+      monthSelect.appendChild(option);
+    }
+
+    if (monthSelect.options.length > 0) {
+      monthSelect.selectedIndex = 0;
+      populateWeekSelect();
+      generateScheduleTable();
+    }
+  }
+
+  function populateWeekSelect() {
+    weekSelect.innerHTML = "";
+    const month = monthSelect.value;
+    const weeks = scheduleDataByMonth[month];
+    for (const week in weeks) {
+      const option = document.createElement("option");
+      const dates = weeks[week].dates;
+      option.value = week;
+      option.textContent = `週次（${dates[0]} ~ ${dates[6]}）`;
+      weekSelect.appendChild(option);
+    }
+    weekSelect.selectedIndex = 0;
+  }
+
+  monthSelect.addEventListener("change", () => {
+    populateWeekSelect();
+    generateScheduleTable();
+  });
+
+  weekSelect.addEventListener("change", generateScheduleTable);
+
+  function generateScheduleTable() {
+    const month = monthSelect.value;
+    const week = weekSelect.value;
+    if (!month || !week) return;
+
+    const { dates, days, schedule } = scheduleDataByMonth[month][week];
+    let html = `<table><thead><tr><th>班別</th><th>科別</th>`;
+
+    for (let i = 0; i < 7; i++) {
+      html += `<th>${dates[i]}<br>${days[i]}</th>`;
+    }
+
+    html += `</tr></thead><tbody>`;
+
+    for (const row of schedule) {
+      html += `<tr><td class="dept">${row.time}</td><td>${row.dept}</td>`;
+
+      row.doctors.forEach(cell => {
+        if (!cell || Object.keys(cell).length === 0) {
+          html += `<td></td>`;
+        } else {
+          html += `<td>`;
+          html += `<div class="doctor-name">${cell.name || ""}</div>`;
+          if (cell.start) html += `<div class="start-time">${cell.start}</div>`;
+          if (typeof cell.regCount === "number") {
+            if (cell.regCount >= 45) {
+              html += `<div class="full">已額滿</div>`;
+            } else {
+              html += `<div class="reg-info">可掛號</div>`;
+            }
+          }
+          html += `</td>`;
+        }
+      });
+
+      html += `</tr>`;
+    }
+
+    html += `</tbody></table>`;
+    scheduleTableDiv.innerHTML = html;
+  }
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const patientAccount = localStorage.getItem("account");
+      if (patientAccount) {
+        const patientInput = document.getElementById("patient_id");
+        patientInput.value = patientAccount;
+        patientInput.readOnly = true;
+      }
+
+      document.getElementById("dept_id").addEventListener("change", loadDoctors);
+      document.getElementById("date").addEventListener("change", loadDoctors);
+      document.getElementById("timeslot").addEventListener("change", loadDoctors);
+    });
+
+    async function loadDoctors() {
+      const deptId = document.getElementById("dept_id").value;
+      const date = document.getElementById("date").value;
+      const timeslot = document.getElementById("timeslot").value;
+
+      if (!deptId || !date || !timeslot) return;
+
+      try {
+        const response = await fetch(`get_doctors.php?dept_id=${deptId}&date=${date}&timeslot=${timeslot}`);
+        const data = await response.json();
+
+        const doctorSelect = document.getElementById("doctor_id");
+        doctorSelect.innerHTML = "";
+
+        if (data.length === 0) {
+          const option = document.createElement("option");
+          option.text = "此時段無醫生可預約";
+          option.disabled = true;
+          option.selected = true;
+          doctorSelect.add(option);
+        } else {
+          data.forEach(doc => {
+            const option = document.createElement("option");
+            option.value = doc.doctor_id;
+            option.text = `${doc.name}（剩餘名額：${doc.remaining}）`;
+            option.disabled = doc.remaining === 0;
+            doctorSelect.add(option);
+          });
+        }
+      } catch (err) {
+        alert("無法載入醫生資料，請稍後再試！");
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>登出中...</title>
+  <script>
+    async function logout() {
+      try {
+        // 呼叫後端登出 API (依你的後端登出路徑調整)
+        const response = await fetch('/api/logout.php', {
+          method: 'POST',
+          credentials: 'include'  // 包含 cookie，依需求調整
+        });
+        if (response.ok) {
+          // 後端成功登出，清除前端登入資料（例如 localStorage）
+          localStorage.removeItem('account');
+          // 跳轉登入頁或首頁
+          window.location.href = 'portal.html';
+        } else {
+          alert('登出失敗，請稍後再試。');
+          window.location.href = 'index.html';
+        }
+      } catch (error) {
+        alert('登出過程發生錯誤，請稍後再試。');
+        window.location.href = 'index.html';
+      }
+    }
+    logout();
+  </script>
+</head>
+<body>
+  <p>正在登出，請稍候...</p>
+</body>
+</html>

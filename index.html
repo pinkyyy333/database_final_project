@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新竹交通醫院</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    .navbar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 5%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .navbar .logo h1 { margin: 0; font-size: 24px; }
+    .navbar .logo p { margin: 0; font-size: 12px; color: #666; }
+    .navbar nav a {
+      margin: 0 15px;
+      text-decoration: none;
+      color: #000;
+      font-size: 18px;
+      padding: 5px 10px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.3s, font-weight 0.3s, border-bottom 0.3s;
+    }
+    .navbar nav a:hover {
+      color: #0052a5;
+      font-weight: bold;
+      border-bottom: 2px solid #0052a5;
+    }
+
+    /* 圖片輪播區塊 */
+    #carousel { 
+      position: relative;
+      width: 70%;
+      height: 600px;
+      margin: 30px auto;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+    #carousel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.3);
+      border: none;
+      font-size: 30px;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #prev { left: 10px; }
+    #next { right: 10px; }
+
+    /* 最新公告列表 */
+    #announcements { width: 80%; margin: 20px auto; }
+    #announcements h2 { font-size: 22px; color: #333; border-bottom: 2px solid #0052a5; display: inline-block; padding-bottom: 5px; }
+    #announcements ul { list-style: none; padding: 0; }
+    #announcements li { margin: 8px 0; font-size: 16px; }
+    #announcements li .date { color: #888; margin-right: 10px; }
+    .main {
+      margin-left: 240px;
+      padding: 80px 20px 20px;
+    }
+    #announcements {
+      width: 80%;
+      margin: 20px auto;
+    }
+
+    #announcements h2 {
+      font-size: 22px;
+      color: #333;
+      border-bottom: 2px solid #0052a5;
+      display: inline-block;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+    }
+
+    .news-item {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .news-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .news-date {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <h1>新竹交通醫院</h1>
+      <p>Hsinchu Chiao Tung Hospital</p>
+    </div>
+    <nav>
+        <a href="index.html">首頁</a>
+      <a href="appointment_booking.html">掛號</a>
+      <a href="dashboard.html">看診進度</a>
+      <a href="doctor_intro.html">醫療團隊</a>
+      <a href="portal.html">登入</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="carousel">
+      <button class="arrow" id="prev">&#10094;</button>
+      <img id="carousel-image" src="新冠疫苗施打.png" alt="公告圖片">
+      <button class="arrow" id="next">&#10095;</button>
+    </section>
+
+    <section id="announcements">
+      <h2>最新公告</h2>
+      <div class="news-item">
+        <div class="news-title">健康講座—自體免疫疾病防治</div>
+        <div class="news-date">2025-05-29</div>
+        <p>邀請專家講解自體免疫疾病的預防與治療，歡迎報名參加。</p>
+      </div>
+      <div class="news-item">
+        <div class="news-title">健康講座—起心漢染</div>
+        <div class="news-date">2025-05-29</div>
+        <p>探討起心漢染症狀與最新醫療進展，免費開放民眾參加。</p>
+      </div>
+      <div class="news-item">
+        <div class="news-title">生醫醫院竹北院區四診門診掛號公告</div>
+        <div class="news-date">2025-03-31</div>
+        <p>竹北院區四診門診自即日起調整掛號流程，請病患注意。</p>
+      </div>
+      <div class="news-item">
+        <div class="news-title">114年5月1日起：生醫醫院竹北院區門診掛號實施</div>
+        <div class="news-date">2025-02-12</div>
+        <p>新掛號規則詳情，請參閱官網公告，保障病患權益。</p>
+      </div>
+      <div class="news-item">
+        <div class="news-title">M疫疫苗施打</div>
+        <div class="news-date">2024-11-13</div>
+        <p>本院開放M疫疫苗預約，請盡速透過系統登記。</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const images = [
+      '新冠疫苗施打.png',
+      '端午連假暫停疫苗施打服務.png',
+      '健康講座--你的腸胃不是你的腸胃.png'
+    ];
+    let current = 0;
+    const carouselImage = document.getElementById('carousel-image');
+
+    function updateImage() {
+      carouselImage.src = images[current];
+    }
+
+    document.getElementById('next').addEventListener('click', () => {
+      current = (current + 1) % images.length;
+      updateImage();
+    });
+    document.getElementById('prev').addEventListener('click', () => {
+      current = (current - 1 + images.length) % images.length;
+      updateImage();
+    });
+  </script>
+  
+</body>
+</html>

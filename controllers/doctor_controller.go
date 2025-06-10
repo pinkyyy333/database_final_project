@@ -14,18 +14,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// JWTClaims 醫師用的 token payload
-/*
-type JWTClaims struct {
-   DoctorID uint   `json:"doctor_id"`           // 改成 uint
-   Role     string `json:"role,omitempty"`      // 加上角色欄位
-   jwt.RegisteredClaims                       // v4 必須用 RegisteredClaims
-}*/
+// DoctorClaims 醫師用的 token payload
+// 使用 jwt.RegisteredClaims 支援 v4 欄位
+type DoctorClaims struct {
+	DoctorID uint   `json:"doctor_id"`
+	Role     string `json:"role,omitempty"`
+	jwt.RegisteredClaims
+}
 
 // CreateDoctor 註冊新醫師（含密碼雜湊）
 func CreateDoctor(c *gin.Context) {
 	var req struct {
-		DoctorID   uint32    `json:"doctor_id,string"` // 新增：從 JSON 讀入醫師代號
+		DoctorID   uint32    `json:"doctor_id,string"`
 		DeptID     uint32    `json:"dept_id"`
 		DoctorName string    `json:"doctor_name"`
 		DoctorInfo string    `json:"doctor_info"`
@@ -39,13 +39,11 @@ func CreateDoctor(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error(), "code": 400})
 		return
 	}
-
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "雜湊密碼失敗", "code": 500})
 		return
 	}
-
 	doc := models.Doctor{
 		DoctorID:   req.DoctorID,
 		DeptID:     req.DeptID,
@@ -61,18 +59,31 @@ func CreateDoctor(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error(), "code": 500})
 		return
 	}
-
 	c.JSON(http.StatusCreated, gin.H{"success": true, "doctor": doc})
 }
 
-// GetAllDoctors 取得所有醫師（管理端）
+// GetAllDoctors 取得醫師列表（供前端預約使用，可依 dept 查詢）
 func GetAllDoctors(c *gin.Context) {
+	dept := c.Query("dept")
 	var docs []models.Doctor
-	if err := db.DB.Find(&docs).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error(), "code": 500})
+	var err error
+	if dept != "" {
+		err = db.DB.Where("dept_id = ?", dept).Find(&docs).Error
+	} else {
+		err = db.DB.Find(&docs).Error
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "取得醫生列表失敗", "code": 500})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "doctors": docs})
+	resp := make([]map[string]interface{}, len(docs))
+	for i, d := range docs {
+		resp[i] = map[string]interface{}{
+			"id":   d.DoctorID,
+			"name": d.DoctorName,
+		}
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // UpdateDoctor 更新醫師資料（管理端）
@@ -87,7 +98,6 @@ func UpdateDoctor(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "找不到醫師", "code": 404})
 		return
 	}
-
 	var input struct {
 		DeptID     uint32    `json:"dept_id"`
 		DoctorName string    `json:"doctor_name"`
@@ -101,7 +111,6 @@ func UpdateDoctor(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error(), "code": 400})
 		return
 	}
-
 	doc.DeptID = input.DeptID
 	doc.DoctorName = input.DoctorName
 	doc.DoctorInfo = input.DoctorInfo
@@ -109,7 +118,6 @@ func UpdateDoctor(c *gin.Context) {
 	doc.Edu = input.Edu
 	doc.HireDate = input.HireDate
 	doc.Phone = input.Phone
-
 	if err := db.DB.Save(&doc).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error(), "code": 500})
 		return
@@ -166,7 +174,6 @@ func LoginDoctor(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "參數錯誤", "code": 400})
 		return
 	}
-
 	var doc models.Doctor
 	if err := db.DB.First(&doc, "doctor_id = ?", req.DoctorID).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "帳號或密碼錯誤", "code": 401})
@@ -176,16 +183,14 @@ func LoginDoctor(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "帳號或密碼錯誤", "code": 401})
 		return
 	}
-
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "伺服器未設定 JWT_SECRET", "code": 500})
 		return
 	}
-
-	claims := JWTClaims{
-		DoctorID: uint(req.DoctorID), // 將 int 轉為 uint
-		Role:     "doctor",           // 記得帶上角色
+	claims := DoctorClaims{
+		DoctorID: uint(req.DoctorID),
+		Role:     "doctor",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			Issuer:    "clinic-backend",
@@ -197,6 +202,5 @@ func LoginDoctor(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Token 產生失敗", "code": 500})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"success": true, "token": signed})
 }

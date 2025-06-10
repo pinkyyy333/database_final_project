@@ -16,5 +16,9 @@ func RegisterBonusRoutes(r *gin.Engine) {
 		b.GET("/doctor_leaves/:leave_id/substitutes", controllers.GetSubstitutes)
 		// 即時佇列
 		b.GET("/doctors/:doctor_id/queue", controllers.GetLiveQueue)
+		// 疫苗：查詢剩餘額度
+		b.GET("/vaccine/quota", controllers.GetVaccineQuota)
+		// 疫苗：送出預約
+		b.POST("/vaccine", controllers.CreateVaccineAppointment)
 	}
 }

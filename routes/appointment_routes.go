@@ -17,5 +17,10 @@ func RegisterAppointmentRoutes(r *gin.Engine) {
 		a.PATCH("/:appointment_id/status", controllers.UpdateAppointmentStatus)
 		a.DELETE("/:appointment_id", controllers.CancelAppointment)
 		a.POST("/:appointment_id/checkin", controllers.CheckInAppointment)
+
+		// 週班表相關
+		a.GET("/schedule/months", controllers.GetScheduleMonths)
+		a.GET("/schedule/weeks", controllers.GetScheduleWeeks)
+		a.GET("/schedule", controllers.GetScheduleByWeek)
 	}
 }

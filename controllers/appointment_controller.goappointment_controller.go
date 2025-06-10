@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// AppointmentRequest 綁定前端的預約請求
 type AppointmentRequest struct {
 	DepartmentID    uint32    `json:"department_id"`
 	DoctorID        uint32    `json:"doctor_id"`
@@ -18,6 +19,7 @@ type AppointmentRequest struct {
 	ServiceType     string    `json:"service_type"`
 }
 
+// CreateAppointment 建立新預約並檢查衝突
 func CreateAppointment(c *gin.Context) {
 	var req AppointmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -28,7 +30,6 @@ func CreateAppointment(c *gin.Context) {
 		RespondError(c, http.StatusBadRequest, "預約時間必須在未來")
 		return
 	}
-	// 衝突檢查
 	var cnt int64
 	if err := db.DB.Model(&models.Appointment{}).
 		Where("doctor_id = ? AND appointment_time = ?", req.DoctorID, req.AppointmentTime).
@@ -55,6 +56,7 @@ func CreateAppointment(c *gin.Context) {
 	RespondCreated(c, gin.H{"appointment": a})
 }
 
+// GetPatientAppointments 取得某病患所有預約
 func GetPatientAppointments(c *gin.Context) {
 	pid := c.Param("patient_id")
 	var list []models.Appointment
@@ -65,6 +67,7 @@ func GetPatientAppointments(c *gin.Context) {
 	RespondOK(c, gin.H{"appointments": list})
 }
 
+// GetDoctorAppointments 取得某醫師所有預約
 func GetDoctorAppointments(c *gin.Context) {
 	did := c.Param("doctor_id")
 	var list []models.Appointment
@@ -75,73 +78,59 @@ func GetDoctorAppointments(c *gin.Context) {
 	RespondOK(c, gin.H{"appointments": list})
 }
 
+// SlotInfo 用來回傳各時段的已預約數與容量
 type SlotInfo struct {
 	Slot     string `json:"slot"`     // ISO8601 時間字串
 	Count    int    `json:"count"`    // 已被預約人數
-	Capacity int    `json:"capacity"` // 該時段最大可約人數 (slot_limit)
+	Capacity int64  `json:"capacity"` // 該時段最大可約人數
 }
 
+// GetAvailableSlots 查某醫師於某日的所有可預約時段
 func GetAvailableSlots(c *gin.Context) {
-	// 1. 解析路徑與查詢參數
 	doctorID := c.Param("doctor_id")
 	dateStr := c.Query("date")
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "date 格式錯誤，請使用 YYYY-MM-DD",
-		})
+		RespondError(c, http.StatusBadRequest, "date 格式錯誤，請使用 YYYY-MM-DD")
 		return
 	}
 
-	// 2. 從 schedule_slots 表抓出該醫師該日所有排班時段
+	// 撈排班
 	var scheds []models.ScheduleSlot
 	if err := db.DB.
-		Where("doctor_id = ? AND date = ?", doctorID, dateStr).
+		Where("doctor_id = ? AND date = ?", doctorID, date).
 		Find(&scheds).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "讀取排班資料失敗",
-		})
+		RespondError(c, http.StatusInternalServerError, "讀取排班資料失敗")
 		return
 	}
 
-	// 3. 從 appointments 表統計每個時段的已被預約人數
-	type CountRow struct {
-		SlotTime string `gorm:"column:slot_time"` // TIME(appointment_time) 回傳
+	// 統計已預約數
+	type countRow struct {
+		SlotTime string `gorm:"column:slot_time"`
 		Count    int    `gorm:"column:count"`
 	}
-	var counts []CountRow
+	var counts []countRow
 	if err := db.DB.Table("appointments").
 		Select("TIME(appointment_time) AS slot_time, COUNT(*) AS count").
 		Where("doctor_id = ? AND DATE(appointment_time) = ?", doctorID, dateStr).
 		Group("slot_time").
 		Scan(&counts).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "讀取預約統計失敗",
-		})
+		RespondError(c, http.StatusInternalServerError, "讀取預約統計失敗")
 		return
 	}
-	// 3.1 把統計結果放到 map 方便 lookup
 	booked := make(map[string]int, len(counts))
 	for _, r := range counts {
 		booked[r.SlotTime] = r.Count
 	}
 
-	// 4. 組合最終要回傳的 infos
+	// 組回傳
 	infos := make([]SlotInfo, 0, len(scheds))
 	for _, s := range scheds {
-		// 4.1 先把字串 "HH:MM:SS" 解析成 time.Time
-		parsed, err := time.Parse("15:04:05", s.SlotTime)
-		if err != nil {
-			continue
-		}
-		// 4.2 把它合併到當天的完整 time.Time
+		parsed, _ := time.Parse("15:04:05", s.SlotTime)
 		t := time.Date(
 			date.Year(), date.Month(), date.Day(),
 			parsed.Hour(), parsed.Minute(), parsed.Second(),
-			0, time.Local,
+			0, time.UTC,
 		)
 		infos = append(infos, SlotInfo{
 			Slot:     t.Format(time.RFC3339),
@@ -150,13 +139,13 @@ func GetAvailableSlots(c *gin.Context) {
 		})
 	}
 
-	// 5. 回傳 JSON
 	c.JSON(http.StatusOK, gin.H{
 		"success":         true,
 		"available_slots": infos,
 	})
 }
 
+// UpdateAppointmentStatus 更新某預約狀態
 func UpdateAppointmentStatus(c *gin.Context) {
 	id := c.Param("appointment_id")
 	var req struct {
@@ -179,6 +168,7 @@ func UpdateAppointmentStatus(c *gin.Context) {
 	RespondOK(c, gin.H{"appointment": a})
 }
 
+// CancelAppointment 將某預約標記為 cancelled
 func CancelAppointment(c *gin.Context) {
 	id := c.Param("appointment_id")
 	var a models.Appointment
@@ -194,6 +184,7 @@ func CancelAppointment(c *gin.Context) {
 	RespondOK(c, gin.H{"message": "預約已取消"})
 }
 
+// CheckInAppointment 報到某預約，設定狀態為 checked_in 並記錄時間
 func CheckInAppointment(c *gin.Context) {
 	id := c.Param("appointment_id")
 	var appt models.Appointment
@@ -211,6 +202,7 @@ func CheckInAppointment(c *gin.Context) {
 	RespondOK(c, gin.H{"appointment": appt})
 }
 
+// GetAvailableDoctors 查某日(YYYY-MM-DD)有排班的醫師列表
 func GetAvailableDoctors(c *gin.Context) {
 	dateStr := c.Query("date")
 	if dateStr == "" {
@@ -222,42 +214,30 @@ func GetAvailableDoctors(c *gin.Context) {
 		RespondError(c, http.StatusBadRequest, "date 格式錯誤，需 YYYY-MM-DD")
 		return
 	}
-
-	// 1) 從 schedule_slots 表撈出該 date 所有的排班時段
 	var slots []models.ScheduleSlot
-	if err := db.DB.
-		Where("date = ?", date).
-		Find(&slots).Error; err != nil {
+	if err := db.DB.Where("date = ?", date).Find(&slots).Error; err != nil {
 		RespondError(c, http.StatusInternalServerError, "讀取排班時段失敗")
 		return
 	}
-
-	// 2) 從 slots 裡蒐集唯一的 doctor_id
-	idMap := make(map[uint32]bool)
+	set := make(map[uint32]struct{})
 	for _, s := range slots {
-		idMap[s.DoctorID] = true
+		set[s.DoctorID] = struct{}{}
 	}
-	ids := make([]uint32, 0, len(idMap))
-	for id := range idMap {
+	ids := make([]uint32, 0, len(set))
+	for id := range set {
 		ids = append(ids, id)
 	}
-
-	// 3) 用抓到的 ids 去 doctors 表拿醫師資料
 	var doctors []models.Doctor
-	if err := db.DB.
-		Where("doctor_id IN ?", ids).
-		Find(&doctors).Error; err != nil {
+	if err := db.DB.Where("doctor_id IN ?", ids).Find(&doctors).Error; err != nil {
 		RespondError(c, http.StatusInternalServerError, "讀取醫師資料失敗")
 		return
 	}
-
-	// 4) 回傳 JSON
-	RespondOK(c, gin.H{
-		"success": true,
-		"doctors": doctors,
-	})
+	RespondOK(c, gin.H{"doctors": doctors})
 }
 
+// 以下還有 GetAllAppointments、GetScheduleMonths、GetScheduleWeeks、GetScheduleByWeek 等函式…
+
+// GetAllAppointments 列出某日所有預約(含病患/醫師/科別名稱)
 func GetAllAppointments(c *gin.Context) {
 	dateStr := c.Query("date")
 	if dateStr == "" {
@@ -269,7 +249,6 @@ func GetAllAppointments(c *gin.Context) {
 		return
 	}
 
-	// ① 在函式內定義回傳用的 struct
 	type AppointmentInfo struct {
 		AppointmentID   uint32    `json:"appointment_id"`
 		PatientName     string    `json:"patient_name"`
@@ -278,31 +257,19 @@ func GetAllAppointments(c *gin.Context) {
 		AppointmentTime time.Time `json:"appointment_time"`
 		Status          string    `json:"status"`
 	}
-
-	// ② 一開始就初始化為長度為 0 的 slice
 	list := make([]AppointmentInfo, 0)
-
-	// ③ 用 GORM Scan 填值到 list
-	if err := db.DB.
-		Table("appointments AS a").
-		Select(`
-            a.appointment_id,
-            p.patient_name     AS patient_name,
-            d.doctor_name      AS doctor_name,
-            dept.dept_name     AS department_name,
-            a.appointment_time,
-            a.status
-        `).
-		Joins("JOIN patients    AS p    ON p.patient_id    = a.patient_id").
-		Joins("JOIN doctors     AS d    ON d.doctor_id     = a.doctor_id").
-		Joins("JOIN departments AS dept ON dept.dept_id     = a.department_id").
+	err := db.DB.Table("appointments AS a").
+		Select("a.appointment_id, p.patient_name AS patient_name, d.doctor_name AS doctor_name, dept.dept_name AS department_name, a.appointment_time, a.status").
+		Joins("JOIN patients AS p ON p.patient_id = a.patient_id").
+		Joins("JOIN doctors AS d ON d.doctor_id = a.doctor_id").
+		Joins("JOIN departments AS dept ON dept.dept_id = a.department_id").
 		Where("DATE(a.appointment_time) = ?", dateStr).
-		Scan(&list).Error; err != nil {
+		Scan(&list).Error
+	if err != nil {
 		RespondError(c, http.StatusInternalServerError, "讀取預約清單失敗")
 		return
 	}
 
-	// ④ 回傳 JSON；即便 list 為空，也會是 [] 而不是 null
 	c.JSON(http.StatusOK, gin.H{
 		"success":      true,
 		"appointments": list,

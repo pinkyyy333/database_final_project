@@ -1,19 +1,19 @@
 package controllers
 
 import (
-    "encoding/json"
-    "fmt"
-    "net/http"
-    "os"
-    "time"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"time"
 
-    "clinic-backend/db"
-    "clinic-backend/models"
+	"clinic-backend/db"
+	"clinic-backend/models"
 
-    "github.com/gin-gonic/gin"
-    "github.com/golang-jwt/jwt/v4"
-    "golang.org/x/crypto/bcrypt"
-    "gorm.io/datatypes"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/datatypes"
 )
 
 // PatientRequest 綁定註冊請求，包含前端所有欄位
@@ -35,12 +35,12 @@ type PatientRequest struct {
 
 // JWTClaims 定義 token payload
 type JWTClaims struct {
-    // 前端傳來的身分證字號是字串
-    PatientID string `json:"patient_id,omitempty"`
-    DoctorID  uint   `json:"doctor_id,omitempty"`
-    Role      string `json:"role,omitempty"`
-    // v4 版要用 RegisteredClaims
-    jwt.RegisteredClaims
+	// 前端傳來的身分證字號是字串
+	PatientID string `json:"patient_id,omitempty"`
+	DoctorID  uint   `json:"doctor_id,omitempty"`
+	Role      string `json:"role,omitempty"`
+	// v4 版要用 RegisteredClaims
+	jwt.RegisteredClaims
 }
 
 // RegisterPatient 病患註冊
@@ -95,62 +95,73 @@ func RegisterPatient(c *gin.Context) {
 
 // LoginPatient 病患登入
 func LoginPatient(c *gin.Context) {
-    var req struct {
+	var req struct {
 		PatientID string `json:"patient_id"`
-        Password  string `json:"password"`
-    }
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": true, "message": "參數錯誤: " + err.Error(), "code": 400})
-        return
-    }
+		Password  string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": true, "message": "參數錯誤: " + err.Error(), "code": 400})
+		return
+	}
 
-    fmt.Printf("[DEBUG] Login 嘗試 patient_id=%q\n", req.PatientID)
+	fmt.Printf("[DEBUG] Login 嘗試 patient_id=%q\n", req.PatientID)
 
-    // *只查 password 欄位，避免一次掃描整個 models.Patient 的 JSON 欄位導致失敗*
-    var storedHash string
-    if err := db.DB.Model(&models.Patient{}).
-        Select("password").
-        Where("patient_id = ?", req.PatientID).
-        Scan(&storedHash).Error; err != nil {
-        fmt.Printf("[DEBUG] 查詢密碼失敗: %v\n", err)
-        c.JSON(http.StatusUnauthorized, gin.H{"error": true, "message": "帳號或密碼錯誤", "code": 401})
-        return
-    }
+	// *只查 password 欄位，避免一次掃描整個 models.Patient 的 JSON 欄位導致失敗*
+	var storedHash string
+	if err := db.DB.Model(&models.Patient{}).
+		Select("password").
+		Where("patient_id = ?", req.PatientID).
+		Scan(&storedHash).Error; err != nil {
+		fmt.Printf("[DEBUG] 查詢密碼失敗: %v\n", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": true, "message": "帳號或密碼錯誤", "code": 401})
+		return
+	}
 
-    if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(req.Password)); err != nil {
-        fmt.Printf("[DEBUG] 密碼比對失敗: %v\n", err)
-        c.JSON(http.StatusUnauthorized, gin.H{"error": true, "message": "帳號或密碼錯誤", "code": 401})
-        return
-    }
+	if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(req.Password)); err != nil {
+		fmt.Printf("[DEBUG] 密碼比對失敗: %v\n", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": true, "message": "帳號或密碼錯誤", "code": 401})
+		return
+	}
 
-    // 簽發 JWT，下面流程不變…
-    secret := os.Getenv("JWT_SECRET")
-    if secret == "" {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "伺服器未設定 JWT_SECRET", "code": 500})
-        return
-    }
-    exp := time.Now().Add(24 * time.Hour)
+	// 簽發 JWT，下面流程不變…
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "伺服器未設定 JWT_SECRET", "code": 500})
+		return
+	}
+	exp := time.Now().Add(24 * time.Hour)
 	claims := JWTClaims{
-		PatientID: req.PatientID,      // 現在型別一致：string
-		Role:      "patient",          // 記得帶上 Role
+		PatientID: req.PatientID, // 現在型別一致：string
+		Role:      "patient",     // 記得帶上 Role
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
-    token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "Token 產生失敗", "code": 500})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"error": false, "token": token})
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "Token 產生失敗", "code": 500})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"error": false, "token": token})
 }
 
 // GetPatientProfile 取得個人資料
 func GetPatientProfile(c *gin.Context) {
-	pid, _ := c.Get("patient_id")
+	// 先確認 middleware 確實放了 patient_id
+	pidValue, exists := c.Get("patient_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": true, "message": "請先登入", "code": 401})
+		return
+	}
+	pid, ok := pidValue.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "取得使用者 ID 失敗", "code": 500})
+		return
+	}
+
 	var p models.Patient
-	if err := db.DB.First(&p, "patient_id = ?", pid.(string)).Error; err != nil {
+	if err := db.DB.First(&p, "patient_id = ?", pid).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": true, "message": "讀取資料失敗", "code": 500})
 		return
 	}

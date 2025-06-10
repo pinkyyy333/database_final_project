@@ -1,10 +1,10 @@
+// db/connect.go
 package db
 
 import (
+	"clinic-backend/models"
 	"log"
 	"os"
-
-	"clinic-backend/models"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -13,11 +13,9 @@ import (
 
 var DB *gorm.DB
 
-// Init 建立 GORM 連線並自動 migrate 所有 models
 func InitDB() {
-	// 載入 .env
 	if err := godotenv.Load(); err != nil {
-		log.Println("[警告] 無法載入 .env，請確認環境變數已手動設定")
+		log.Println("[警告] 無法載入 .env")
 	}
 
 	dsn := os.Getenv("DB_USER") + ":" +
@@ -33,6 +31,9 @@ func InitDB() {
 		log.Fatalf("GORM 連線失敗: %v", err)
 	}
 
+	// Debug 模式：印出完整 SQL
+	DB = DB.Debug()
+
 	if err := DB.AutoMigrate(
 		&models.Patient{},
 		&models.Department{},
@@ -40,7 +41,10 @@ func InitDB() {
 		&models.Appointment{},
 		&models.Feedback{},
 		&models.Manager{},
+		&models.VaccineAppointment{},
 	); err != nil {
 		log.Fatalf("AutoMigrate 失敗: %v", err)
 	}
 }
+
+// （已移除 GetVaccineCountByDate 及 CreateVaccineAppointment）
